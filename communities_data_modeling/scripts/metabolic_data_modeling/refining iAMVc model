@@ -1,0 +1,208 @@
+%vch = readCbModel ('iVCH_170718.xml'); vch = removeRxns(vch, 'VvuMBEL943_Biomass');
+%vch = readCbModel ('iVCH_170718.xml'); vch = removeRxns(vch, 'VvuMBEL943_Biomass'); 
+clear
+vch = readCbModel ('iVCH_170723.xml');
+model = vch; 
+
+model = removeRxns(model, {'GLCtexi', 'MG2tpp', 'ICHORS', 'SUCCt3pp', 'ADNt2pp', 'CYTDt2pp', 'L-LACt2rpp', 'INSt2pp', 'SUCCt2r', 'ACt', }); 
+
+% decided to remove reactions that are revereible AND involved in loops AND non-unique gene association
+model = removeRxns(model, {'TTRCYCtex', 'SUCCt','RFAMPtex','NOVBCNtex', 'NI2t', 'NDPK3' ,'NAtex','MOX', 'MINCYCtex','MG2t','LEUt2rpp', 'LEUt4rpp','INDOLEt2rpp', 'LACt3pp','Htex','HACD1', 'HACD2', 'HACD3', 'HACD4', 'HACD5', 'HACD6', 'HACD7', 'HACD8','GLYt2rpp', 'GUAtpp', 'GLYt2rpp', 'FUMtex', 'FUSAtex','FUMt2r','EX_h(e)', 'DOXRBCNtex', 'PTRCORNt7pp', 'ACt2rpp', 'ADK1', 'ASPt2rpp', 'CITt4_1', 'CITtex', 'CMtex', 'CO2tpp', 'COBALTt', 'D-LACt2pp', 'FBA3'}); 
+
+% remove genes and associated reactions if not affectning biomass and not in vibrio cholerae in particular according to Uniprot
+% zupT removed since its a zinc transporter in V. parahemolyticus only, respective reactions for cobalt, zinc, mg transport are retained
+% ybiV removed and respective reactions (G3PT, G6PP) removed
+% serlE/A/B removed and respective reaction (SBTptspp)
+% 'GLYCTO2', 'GLYCTO3', 'GLYCTO4' -> although GPR not in vibrio cholerae but necessary for biomass so retained
+model = removeRxns(model, {'G6PP', 'G3PT', 'SBTptspp', 'AGMPTRCtpp', 'MANGLYCptspp', '3KGK', 'GMHEPK','GMHEPAT' , 'ACGAL6PI', 'ACGAL6PISO', 'CPGNtonex', 'FEENTERtonex', 'ARBTptspp', 'DOXRBCNtpp', 'RFAMPtpp', 'TTRCYCtpp'})
+model = addReaction (model, 'UROCANH', 'urcan[c] + h2o[c]  -> 4izp[c]'); model = changeGeneAssociation (model, 'UROCANH', 'VC1203')
+
+charges = importdata('vch_met2charges.txt'); 
+formulas = importdata('vch_met2formulas.txt'); 
+mets = importdata('vch_mets.txt'); 
+model.metCharge = charges; 
+model.metFormulas = formulas; 
+model.mets = mets; 
+
+
+% quality checks
+% model generation
+addpath('/data/snapdragon/mohameam/scripts/cobratoolbox/src/reconstruction/modelGeneration');
+% check duplicated reactions
+%[modelOut, removedRxnInd, keptRxnInd] = checkDuplicateRxn(model)
+% print out biomass precurosrs and their coefficients
+%objectiveAbbr = checkObjective(model); 
+% detect dead ends; mets which are only consumed or only produced or participate in only one reaction
+%outputMets = detectDeadEnds(model, removeExternalMets) % 365 metabolite
+%[model,removedMets,removedRxns] = removeDeadEnds(model) % 1134 * 1645 
+
+% flux consistency
+addpath('/data/snapdragon/mohameam/scripts/cobratoolbox/src/reconstruction/modelGeneration/fluxConsistency/'); 
+addpath('/data/snapdragon/mohameam/scripts/cobratoolbox/src/reconstruction/modelGeneration/fluxConsistency/DCA'); 
+addpath('/data/snapdragon/mohameam/scripts/cobratoolbox/src/reconstruction/modelGeneration/fluxConsistency/GREEDY');  
+addpath('/data/snapdragon/mohameam/scripts/cobratoolbox/src/dataIntegration/transcriptomics/FASTCORE/'); 
+addpath('/data/snapdragon/mohameam/scripts/cobratoolbox/src/analysis/topology/'); 
+%[fluxConsistentMetBool, fluxConsistentRxnBool, fluxInConsistentMetBool, fluxInConsistentRxnBool, model] = findFluxConsistentSubset(model); 
+%[A, V] = fastcc_nonconvex(model, 0) % The input model is consistent.
+
+% mass balance
+addpath('/data/snapdragon/mohameam/scripts/cobratoolbox/src/reconstruction/modelGeneration/massBalance');
+% Elements = {'H','C', 'O', 'P', 'S', 'N', 'Mg','X','Fe','Zn','Co','R','Ca','Y','I','Na','Cl','K','R','FULLR'};
+% https://github.com/opencobra/cobratoolbox/blob/95d61a2309b2a798a39d690e5fb681e921a3ee63/src/reconstruction/modelGeneration/massBalance/checkMassChargeBalance.m
+checkBalance(model, 'C')
+checkBalance(model, 'N')
+checkBalance(model, 'P')
+checkBalance(model, 'S')
+checkBalance(model, 'H')
+[massImbalance, imBalancedMass, imBalancedCharge, imBalancedRxnBool, Elements, missingFormulaeBool, balancedMetBool] = checkMassChargeBalance(model); 
+
+
+
+% stoichConsistency
+addpath ('/data/snapdragon/mohameam/scripts/cobratoolbox/src/reconstruction/refinement/')
+model = findSExRxnInd(model); 
+modelOut = removeTrivialStoichiometry(model)
+model = modelOut; 
+
+addpath ('/data/snapdragon/mohameam/scripts/cobratoolbox/src/reconstruction/modelGeneration/stoichConsistency/')
+addpath ('/data/snapdragon/mohameam/scripts//cobratoolbox/src/base/solvers/cardOpt/sparseLP/')
+[minLeakMetBool, minLeakRxnBool, minSiphonMetBool, minSiphonRxnBool, leakY, siphonY, statp, statn] = findMinimalLeakageModeRxn(model)
+
+% change model boundary points and re-run FVA
+uptake_rxns = model.rxns (printUptakeBound(model));
+model = changeRxnBounds(model, model.rxns(model.lb == -1000), -1e6, 'l')
+model = changeRxnBounds(model, model.rxns (model.ub == 1000), 1e6, 'u')
+no_uptake = model.rxns (printUptakeBound(model)); model = changeRxnBounds(model, no_uptake, 0, 'l') 
+model = changeRxnBounds(model, uptake_rxns, -10, 'l'); 
+optimizeCbModel (model)
+
+% constratin growth rate
+% reported doubling times are between 38 min (fast growth) to 147 min (slow growth)
+% http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=112369&ver=2&trm=vibrio%20cholerae
+% 38min/60 = 0.6333333h -- corresponds to growth rate = log(2)/0.6333333h = 1.094443
+% 147min/60 = 2.45h -- corresponds to growth rate = log(2)/2.45h = 0.2829172
+model = changeRxnBounds(model, 'biomass', 0.2829172, 'l'); 
+model = changeRxnBounds(model, 'biomass', 1.094443, 'u'); 
+optimizeCbModel (model)
+
+model.c(:) = 0; 
+%changeCobraSolverParams('LP', 'objTol', '1e-6')
+%changeCobraSolverParams('LP', 'minNorm', '1e-6')
+[minFlux, maxFlux] = fluxVariability (model)
+
+
+%% try to remove tRNA reaction, should not be essential or important for biomass and decreasing accuracy to 64%, should be higher !
+vch_170723 = model; 
+optimizeCbModel(vch_170723)
+% removed all tRNA but kept GLUTRR and GLUTRS for glu1sa[c] needed for biomass
+%'GLUTRS', 'GLUTRR'
+% GLUTRS	atp[c] + glu-L[c] + trnaglu[c] 	->	amp[c] + glutrna[c] + ppi[c] 	VC2214
+% GLUTRR	glutrna[c] + h[c] + nadph[c] 	->	glu1sa[c] + nadp[c] + trnaglu[c] 	VC2180
+
+%%% updating GPR association to vch_170723.mat file -- .xml file of the same date is different so I worked on the .mat file directly
+clear
+%model = changeGeneAssociation(model, 'HPYRRx', 'VC1134');
+%findRxnsFromGenes(model, 'VC1134') 
+%vch_180627 = model; 
+%save vch_180627; 
+
+clear;
+
+reactions_to_be_removed_2 = {'2AGPG181tipp', '2AGPG180tipp', '2AGPG161tipp', '2AGPG160tipp', '2AGPG141tipp', '2AGPG140tipp', '2AGPG120tipp', '2AGPE181tipp', '2AGPE180tipp', '2AGPE161tipp', '2AGPE160tipp', '2AGPA120tipp', '2AGPA140tipp', '2AGPA141tipp', '2AGPA160tipp', '2AGPA161tipp', '2AGPA180tipp', '2AGPA181tipp', '2AGPE120tipp', '2AGPE140tipp', '2AGPE141tipp'};
+removed = {'3GMPtex', '3HPPtex', '5MTRtex', 'AMPtex', 'CHTBStex', 'CRNDtex', 'DDGLCNtex', 'G3PEtex', 'GALCTNLtex', 'GDPtex', 'HPPPNtex', 'LIPOtex', 'MEOHtex', 'OROTtex'};
+removed_2 = {'PLIPA1A120pp', 'PLIPA1A140pp', 'PLIPA1A141pp', 'PLIPA1A160pp', 'PLIPA1A161pp', 'PLIPA1A180pp', 'PLIPA1A181pp', 'PLIPA1E120pp', 'PLIPA1E140pp', 'PLIPA1E141pp', 'PLIPA1E160pp', 'PLIPA1E161pp', 'PLIPA1E180pp', 'PLIPA1E181pp', 'PLIPA1G120pp', 'PLIPA1G140pp', 'PLIPA1G141pp', 'PLIPA1G160pp', 'PLIPA1G161pp', 'PLIPA1G180pp', 'PLIPA1G181pp', 'PLIPA2A120pp', 'PLIPA2A140pp', 'PLIPA2A141pp', 'PLIPA2A160pp', 'PLIPA2A161pp', 'PLIPA2A180pp', 'PLIPA2A181pp', 'PLIPA2E120pp', 'PLIPA2E140pp', 'PLIPA2E141pp', 'PLIPA2E160pp', 'PLIPA2E161pp', 'PLIPA2E180pp', 'PLIPA2E181pp', 'PLIPA2G120pp', 'PLIPA2G140pp', 'PLIPA2G141pp', 'PLIPA2G160pp', 'PLIPA2G161pp', 'PLIPA2G180pp', 'PLIPA2G181pp'}; 
+tmp_3 = {'2AGPEAT120', '2AGPEAT140', '2AGPEAT141', '2AGPEAT160', '2AGPEAT161', '2AGPEAT180', '2AGPEAT181', '2AGPGAT120', '2AGPGAT140', '2AGPGAT141', '2AGPGAT160', '2AGPGAT161', '2AGPGAT180', '2AGPGAT181'};
+tmp_2 = {'CYANSTpp', 'HPA3MO', 'DHPDO', 'OPTCCL', '2HH24DDH', '4H2KPILY', 'MPTAT', 'AEPtex'};
+load vch_180627.mat
+model = vch_180627; 
+optimizeCbModel(model)
+model = removeRxns (model, reactions_to_be_removed_2); model = removeRxns (model, removed); 
+model = removeRxns (model, removed_2); model = removeRxns(model, tmp_2); 
+model = removeRxns (model, tmp_3) 
+optimizeCbModel (model)
+
+
+%GLUTRR	glutrna[c] + h[c] + nadph[c] 	->	glu1sa[c] + nadp[c] + trnaglu[c] 	VC2180
+%GLUTRS	atp[c] + glu-L[c] + trnaglu[c] 	->	amp[c] + glutrna[c] + ppi[c] 	VC2214
+%ASP1DC	asp-L[c] + h[c] 	->	ala-B[c] + co2[c] 	panD
+
+tmp  = {'GLUTRS', 'GLUTRR'}; 
+%tmp  = {'GLUTRS', 'GLUTRR'};   
+
+
+model = addSinkReactions(model, {'glu1sa[c]'}, -10, 10); 
+%model = addExchangeRxn(model, 'trnaglu[c]', -1000, 1000); 
+%model = addExchangeRxn(model, 'glutrna[c]', -1000, 1000);
+%model = addSinkReactions(model, {'ala-B[c]'}, -1000, 1000);
+%model = addReaction (model, 'BALAt2pp', 'ala_B[p] + h[p] <=> ala_B[c] + h[c]')
+%model = addExchangeRxn(model, 'asp-L[c]', -1000, 1000);
+optimizeCbModel (model)
+model = removeRxns (model, tmp);
+optimizeCbModel (model)
+
+%model = changeObjective(model, model.rxns, 0); model = changeObjective(model, 'G1SAT', 1); optimizeCbModel (model)
+
+find(sum(model.rxnGeneMat, 1) == 0)
+%We remove unused genes by re-assigning the model's GPR rules, which updates the reaction-gene-matrix and gene list.
+
+%Store GPR list in a new variable
+
+storeGPR = model.grRules;
+%Erase model's gene list and reaction-gene-matrix
+
+model.rxnGeneMat = [];
+model.genes = [];
+%Re-assign GPR rules to model
+
+for i = 1 : length(model.rxns)
+model = changeGeneAssociation(model, model.rxns{i}, storeGPR{i});
+end
+%New gene G1 added to model
+%New gene G4 added to model
+%New gene G2 added to model
+%Check that there are no unused genes left in the model
+
+find(sum(model.rxnGeneMat, 1) == 0)
+optimizeCbModel (model) % vch_180628
+
+% TO DO:
+% need to fix that glcD/E/F are essential while not being annotated in V. cholerae 
+%GLYCTO2	glyclt[c] + q8[c] 	->	glx[c] + q8h2[c] 	(glcD and glcF and glcE)
+%GLYCTO3	glyclt[c] + mqn8[c] 	->	glx[c] + mql8[c] 	(glcD and glcF and glcE)
+%GLYCTO4	2dmmq8[c] + glyclt[c] 	->	2dmmql8[c] + glx[c] 	(glcD and glcF and glcE) 
+clear;
+load vch_180628.mat
+model = vch_180628;
+optimizeCbModel(model) 
+model = removeRxns (model, {'GLYCTO2', 'GLYCTO3', 'GLYCTO4'}); 
+%model = addSinkReactions(model, {'glx[c]'}, -1000, 1000)
+%model = addSinkReactions(model, {'2dmmql8[c]'}, -1000, 1000)
+%model = addSinkReactions(model, {'2dmmq8[c]'}, -1000, 1000)
+model = addSinkReactions(model, {'glyclt[c]'}, -10, 10)
+optimizeCbModel(model)
+% need to fix that ompN is essential while not being annotated in V. cholerae
+% need to use BALAt2pp instead of the sink for ala_B
+
+% change panD to panP
+model = changeGeneAssociation(model, 'ASP1DC', 'panP');
+findRxnsFromGenes(model, 'panP') 
+vch_180628 = model; 
+save vch_180628; 
+
+
+%Remove issues with quotation marks in the GPR definitions.
+
+model.grRules = strrep(model.grRules, '''', '');
+%Remove spaces from reaction abbreviations.
+
+model.rxns = strrep(model.rxns, ' ', '');
+%Remove unneccessary brackets from the GPR associations.
+
+for i = 1 : length(model.grRules)
+if isempty(strfind(model.grRules{i}, 'and')) && isempty(strfind(model.grRules{i}, 'or'))% no AND or OR in GPR
+model.grRules{i} = regexprep(model.grRules{i}, '[\(\)]', '');
+end
+end
+
+
+
