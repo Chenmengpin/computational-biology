@@ -1,0 +1,357 @@
+---
+title: "enterics_paper_am01"
+author: "am"
+date: "10/23/2018"
+output: html_document
+---
+```{r}
+setwd('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/')
+dat = read.delim ('414_essential_genes_to_extract_223_high_confidence_set.txt', stringsAsFactors = FALSE)
+high_confidence = dat[dat$PMID..xxx == 'E' & dat$Chao.et.al. == 'E' & dat$Cameron.et.al. == 'E', ]
+write.table (high_confidence, file = '223_high_confidence_set.txt', sep = '\t', quote = FALSE, row.names = FALSE)
+
+min_essentialtiy = read.delim ('iAM_Vc960_gene_essentiality_minimal_medium_glucose.txt', stringsAsFactors = FALSE); min_essentialtiy = min_essentialtiy[,-2];  min_essentialtiy = min_essentialtiy[,-2]; 
+lb_essentiality = read.delim ('iAM_Vc960_gene_essentiality_LB.txt', stringsAsFactors = FALSE); lb_essentiality = lb_essentiality[,-2]; lb_essentiality = lb_essentiality[,-2]; 
+
+
+# validation against OGEE dataset
+ogee_dat = read.csv ('Vibrio_cholerae_O1_str_C6706_consolidated.csv', stringsAsFactors = FALSE)
+colnames(ogee_dat)[7] = c('iAM_Vc960_geneID'); 
+dat = merge(min_essentialtiy, lb_essentiality)
+df = merge (dat, ogee_dat, all = TRUE)
+write.table (df, file = 'ogee_dat_merged_with_essentiality_predictions_iAM_Vc960.txt', sep = '\t', quote = FALSE, row.names = FALSE)
+# MCC based on ogee dataset (E + NE only)
+TP =  94
+TN =  692 # correct
+FP = 67
+FN =  51# incorrect
+
+# MCC
+MCC <- function(tp, tn, fp, fn) {
+     # compute Matthews correlation coefficient
+     prod <- (tp + fp)*(tp + fn)*(tn + fp)*(tn + fn)
+     return((tp * tn - fp * fn) / sqrt(prod))
+}
+MCC (TP, TN, FP, FN)
+
+# fisher
+cont_table = matrix (c(94,51, 67,692), nrow = 2, dimnames = list (Guess = c('E', 'NE'), Truth = c('E', 'NE')))
+fisher.test (cont_table)
+```
+
+```{r}
+# growth supporting conditions
+library (ggfortify)
+library (pheatmap)
+
+setwd('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/')
+dat = read.delim ('growth_supporting_conditions.txt', stringsAsFactors = FALSE)
+dat = dat[-3, ]; #dat = dat[-2, ]
+
+df = dat[, 4:658]
+df = apply (df, 2, function (x) ifelse (x > 0.01, 1, x))
+df = apply (df, 2, function (x) ifelse (x <= 0.01, 0, x))
+# remove two conditions on which no species grow at all
+#pca
+autoplot (prcomp(df), data = dat, colour = 'species')
+#heatmap
+pdf ('insilico_growth_screens_no_co_culture_updated.pdf', height = 7, width = 6)
+annotation_col = data.frame (dat$species); rownames(annotation_col) = dat$strain
+rownames(df) = dat$strain
+pheatmap (t(df), annotation_col = annotation_col, clustering_method = 'ward.D', fontsize_row = 2, fontsize_col = 3)
+dev.off()
+write.table (t(df), file = 'insilico_growth_screens_no_co_culture_updated.txt', sep = '\t', quote = FALSE)
+number_of_growth_supporting_conditions = data.frame (rowSums(df))
+write.table (number_of_growth_supporting_conditions, file = 'number_of_growth_supporting_conditions.txt', sep = '\t', quote = FALSE)
+# consider splitting into aerobic/anaerobic and scale relative to glucose at aerobic conditions as standard growth conditions
+
+# consider using relative growth rate to glucose/sulfur/phosphorus for each model rather than absoulte flux rates
+#C_AERO_D.Glucose.exchange	aerobic	carbon
+#iAM_Vc959 = 1.0744	
+#iETEC_1333 = 1.4556	
+#iCo-Culture = 0.6666	
+
+# 1.0744	1.4556	0.6666 N_AERO_Ammonia.exchange
+# 1.0744	1.4556	0.6666	P_AERO_Phosphate.exchange
+# 1.0744	1.4556	0.6666	S_AERO_Sulfate.exchange
+
+```
+
+```{r}
+# ternary plot
+# using ggtern
+library (ggtern)
+df = read.delim ('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/ternary_plot_growth_conditions.txt', stringsAsFactors = FALSE)
+pdf ('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/ternary_plot.pdf', height = 7, width  = 18)
+ggtern(data=df, aes(x=iAM_Vc960, y=iETEC_1333, z=iCo_Culture)) +
+  geom_point(aes(shape=alternate_resource,colour=oxygen)) 
+dev.off()
+
+aerobic = df[df$oxygen == 'aerobic', ]
+anaerobic = df[df$oxygen == 'anaerobic', ]
+
+df = anaerobic; rownames(df) = df$growth_conditions; df = df[, -1]; df = df[, 1:3]; df = apply (df, 2, function (x) ifelse (x > 0.01, 1, x)); df = apply (df, 2, function (x) ifelse (x <= 0.01, 0, x)); df = data.frame(df)
+dim(df[df$iAM_Vc960 == 1 & df$iETEC_1333 == 1 & df$iCo_Culture == 1, ])
+dim(df[df$iAM_Vc960 == 0 & df$iETEC_1333 == 1 & df$iCo_Culture == 1, ])
+dim(df[df$iAM_Vc960 == 1 & df$iETEC_1333 == 0 & df$iCo_Culture == 1, ])
+dim(df[df$iAM_Vc960 == 0 & df$iETEC_1333 == 1 & df$iCo_Culture == 0, ])
+dim(df[df$iAM_Vc960 == 0 & df$iETEC_1333 == 0 & df$iCo_Culture == 0, ]) 
+```
+
+
+```{r}
+# growth curves and CFU
+library(plyr)
+library(reshape2)
+library(plotly)
+library(reshape)
+#+++++++++++++++++++++++++
+# Function to calculate the mean and the standard deviation
+  # for each group
+#+++++++++++++++++++++++++
+# data : a data frame
+# varname : the name of a column containing the variable
+  #to be summariezed
+# groupnames : vector of column names to be used as
+  # grouping variables
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+ return(data_sum)
+}
+
+#dat = read.delim ('vch_e36_cfu.txt', stringsAsFactors = FALSE, row.names = 1)
+#dat = read.delim ('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/cfu_vch_ecoli_cell_reports_revisions.txt')
+dat = read.delim ('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/cfu_vch_ecoli.txt')
+#dat = dat[1, ]
+#df = melt(dat)
+#df$label = c(replicate(3, 'V52'), replicate (3, 'E36'), replicate (3, 'V52'), replicate (3, 'E36'))
+colnames(dat) [2] = c('cfu')
+df = dat; 
+vch = dat[1:3, ]; e36 = dat[13:15,]; e616 = dat[4:6, ]; vch_e36 = dat[16:18, ]; vch_e616 = dat[7:9, ]; e36_vch = dat[19:21, ]; e616_vch = dat[7:9, ] 
+# unpaired two-sided Wilcoxon
+wilcox.test(vch_e36$cfu, vch$cfu, paired = FALSE, alternative = 'two.sided', conf.int = TRUE, conf.level = 0.90)
+#summarise the data
+df <- data_summary(dat, varname="cfu",groupnames=c("pathogen", "culture"))
+df$culture = factor(df$culture, levels = df$culture[order(rev(levels(df$culture)))])
+# Convert dose to a factor variable
+# http://www.sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
+
+p = ggplot (data = df, aes (x = culture, y = cfu, fill=pathogen)) + 
+geom_bar(stat="identity", width=0.5) + 
+  geom_errorbar(aes(ymin=cfu-sd, ymax=cfu+sd), width=.2,
+                 position=position_dodge(.9)) + 
+#geom_dotplot(binaxis='y', 
+#               stackdir='center', 
+#               dotsize = .5, 
+#               fill="red", binwidth = 0.5) +
+#xlab("\nYour_x_Label") + ylab("Your_y_Label\n") +
+theme(axis.title.y = element_text(size = rel(0.8), angle = 360)) + 
+theme(axis.title.x = element_text(size = rel(0.8), angle = 360)) + 
+labs (x = 'pathogen', y = 'cfu/ml') + 
+#facet_grid (.~culture)
+facet_wrap (~pathogen)
+#p + scale_fill_brewer(palette="Dark2")
+#p <- ggplotly(p)
+p
+```
+
+```{r}
+# OD measurement
+# od measurement
+# Standard error of the mean
+# http://www.sthda.com/english/wiki/ggplot2-colors-how-to-change-colors-automatically-and-manually
+#dat = read.delim ('od_measurement_e616.txt');  colnames(dat) [4] = c('species')
+setwd('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/')
+#dat = read.delim ('od_measurement_vch_etec.txt')
+dat = read.delim ('od_measurement_vch_etec_revised.txt')
+p = ggplot(dat, aes(x=Time, y=OD, colour=pathogen)) + 
+    geom_errorbar(aes(ymin=OD-sd, ymax=OD+sd), width=.1) +
+    geom_line() +
+    geom_point()
+pdf ('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/od_growth_curves_revised.pdf', height = 4, width = 5)
+p
+dev.off()
+#p + scale_color_manual(breaks = c("8", "6", "4"), values = c('#619CFF', '#F8766D',  '#00BFC4'))
+```
+
+
+```{r}
+# gene essentialtiy variation in mono and co-cultures in minimal medium + glucose
+etec = read.delim ('single_genes_ess_iETEC_model')
+vch = read.delim ('single_genes_ess_iAM_Vc959_model')
+coculture = read.delim ('single_genes_ess_merged_model')
+
+colnames(coculture)[2] = c('geneID')
+colnames(vch)[2] = c('geneID')
+colnames(etec)[2] = c('geneID')
+
+df = merge(coculture, vch, all = TRUE); df = merge (df, etec, all = TRUE)
+write.table (df, file = 'single_gene_essentiality_variation_mono_co_culture.txt', sep = '\t', quote = FALSE)
+# essential genes
+#vch_ess  = vch[vch$iAM_Vc959_grRed >= 10, ]
+#etec_ess = etec[etec$iETEC_1333_grRed >= 10, ]
+#coculture_ess = coculture[coculture$merged_model_grRed >= 10, ]
+
+
+# rich medium
+etec = read.delim ('single_genes_ess_iETEC_LB_model')
+vch = read.delim ('single_genes_ess_iAM_Vc959_LB_model')
+coculture = read.delim ('single_genes_ess_merged_model_LB')
+
+colnames(coculture)[2] = c('geneID')
+colnames(vch)[2] = c('geneID')
+colnames(etec)[2] = c('geneID')
+
+df = merge(coculture, vch, all = TRUE); df = merge (df, etec, all = TRUE)
+write.table (df, file = 'single_gene_essentiality_variation_mono_co_culture_LB.txt', sep = '\t', quote = FALSE)
+# essential genes
+vch_ess  = vch[vch$iAM_Vc959_LB_grRed >= 10, ]
+etec_ess = etec[etec$iETE_1333_LB_grRed >= 10, ]
+coculture_ess = coculture[coculture$merged_model_2296_LB_grRed >= 10, ]
+
+```
+
+```{r}
+# colicins
+dat = read.delim ('colicins_expression_etec.txt', stringsAsFactors = FALSE, row.names = 1); dat = dat*-1
+pdf ('colicins_expression_etec.pdf', height = 5, width = 10)
+pheatmap (dat)
+dev.off()
+```
+
+```{r}
+# single gene essentiality vs species composition
+dat = read.delim ('single_gene_ess_vs_species_composition.txt', stringsAsFactors = FALSE, row.names = 1)
+```
+
+```{r}
+# PCA analysis for supp material
+# growth supporting conditions
+library (ggfortify)
+library (pheatmap)
+
+setwd('~/Documents/vibrio_etec/nature_metabolism_am01/supp_material/')
+dat = read.delim ('growth_supporting_conditions.txt', stringsAsFactors = FALSE)
+
+
+df = dat[, 4:658]
+df = apply (df, 2, function (x) ifelse (x > 0.01, 1, x))
+df = apply (df, 2, function (x) ifelse (x <= 0.01, 0, x))
+# remove two conditions on which no species grow at all
+#pca
+autoplot (prcomp(df), data = dat, colour = 'species')
+```
+
+```{r}
+#rm (list = ls())
+# iAM_Vc960
+setwd('/Users/mohameam/Documents/vibrio_etec/nature_metabolism_am01/supp_material/')
+library (ggplot2)
+library (devtools)
+library(matrixStats)
+#source("http://bioconductor.org/biocLite.R")
+#biocLite("Biobase")
+dat = NULL; df  = NULL
+dat = read.delim ('sampled_iAM_Vc960_cor', header = FALSE)
+rxns = read.delim ('sampled_iAM_Vc960_rxns', header = FALSE); rxns = rxns[,1]
+rownames(dat) = rxns
+dat = round (dat, 9);
+
+# for tree map
+fva_model_lb_ub = read.delim ('sampled_iAM_Vc960_fva_model_lb_ub.txt', stringsAsFactors = FALSE)
+fva_model_lb_ub$minFlux = fva_model_lb_ub$minFlux*1e2
+fva_model_lb_ub$maxFlux = fva_model_lb_ub$maxFlux*1e2
+fva_model_lb_ub$model.lb = fva_model_lb_ub$model.lb*1e6
+#fva_model_lb_ub$model.ub = fva_model_lb_ub$model.ub*1e6
+fva_model_lb_ub = cbind (fva_model_lb_ub, rxns)
+loop_rxns = fva_model_lb_ub[fva_model_lb_ub$minFlux == -1e6 | fva_model_lb_ub$maxFlux == 1e6, ]
+save (loop_rxns, file = 'loop_rxns.R')
+
+
+sampling_mean  = data.frame (rowMeans(dat))
+sampling_mean = cbind (sampling_mean, rownames(sampling_mean))
+colnames(sampling_mean) = c('SamplingMean', 'rxns')
+min_sampling = data.frame(rowMins (as.matrix(dat)))
+colnames (min_sampling) = c('SamplingMin')
+max_sampling = data.frame (rowMaxs(as.matrix(dat)))
+colnames (max_sampling) = c('SamplingMax')
+min_max_sampling = cbind (rownames(dat), min_sampling)
+min_max_sampling = cbind (min_max_sampling, max_sampling)
+colnames(min_max_sampling) [1] = c('rxns')
+
+dat_ori = dat; 
+dat_minus_loop_rxns = dat[!rownames(dat) %in% loop_rxns$rxns, ]
+norm_factor = median (sum(abs(dat_minus_loop_rxns))) 
+normalized_sampled_points = dat/norm_factor
+sampling_mean_normalized = data.frame (rowMeans(normalized_sampled_points))
+sampling_mean_normalized = cbind (sampling_mean_normalized, rownames(sampling_mean_normalized))
+colnames(sampling_mean_normalized) = c('normalized_sampling_mean_iAM_Vc960', 'rxns')
+
+df = NULL
+#df = merge (lb_ub, fva, all = TRUE)
+df= merge (fva_model_lb_ub, sampling_mean, all = TRUE)
+df = merge (df, min_max_sampling, all = TRUE)
+df = merge (df, sampling_mean_normalized)
+write.table (df, file = 'sampled_iAM_Vc960_flux_analysis_span_analysis.txt', sep = '\t', quote = FALSE, row.names = FALSE)
+```
+
+```{r}
+rm (list = ls())
+# merged_model_2293
+setwd('/Users/mohameam/Documents/vibrio_etec/nature_metabolism_am01/supp_material/')
+library (ggplot2)
+library (devtools)
+library(matrixStats)
+#source("http://bioconductor.org/biocLite.R")
+#biocLite("Biobase")
+dat = NULL; df  = NULL
+dat = read.delim ('sampled_merged_model_2293_cor', header = FALSE)
+rxns = read.delim ('sampled_merged_model_2293_rxns', header = FALSE); rxns = rxns[,1]
+rownames(dat) = rxns
+dat = round (dat, 9);
+
+# for tree map
+fva_model_lb_ub = read.delim ('sampled_merged_model_2293_fva_model_lb_ub.txt', stringsAsFactors = FALSE)
+fva_model_lb_ub$minFlux = fva_model_lb_ub$minFlux*1e6
+fva_model_lb_ub$maxFlux = fva_model_lb_ub$maxFlux*1e6
+fva_model_lb_ub$model.lb = fva_model_lb_ub$model.lb*1e6
+#fva_model_lb_ub$model.ub = fva_model_lb_ub$model.ub*1e6
+fva_model_lb_ub = cbind (fva_model_lb_ub, rxns)
+loop_rxns = fva_model_lb_ub[fva_model_lb_ub$minFlux == -1e6 | fva_model_lb_ub$maxFlux == 1e6, ]
+save (loop_rxns, file = 'loop_rxns.R')
+
+
+sampling_mean  = data.frame (rowMeans(dat))
+sampling_mean = cbind (sampling_mean, rownames(sampling_mean))
+colnames(sampling_mean) = c('SamplingMean', 'rxns')
+min_sampling = data.frame(rowMins (as.matrix(dat)))
+colnames (min_sampling) = c('SamplingMin')
+max_sampling = data.frame (rowMaxs(as.matrix(dat)))
+colnames (max_sampling) = c('SamplingMax')
+min_max_sampling = cbind (rownames(dat), min_sampling)
+min_max_sampling = cbind (min_max_sampling, max_sampling)
+colnames(min_max_sampling) [1] = c('rxns')
+
+dat_ori = dat; 
+dat_minus_loop_rxns = dat[!rownames(dat) %in% loop_rxns$rxns, ]
+norm_factor = median (sum(abs(dat_minus_loop_rxns))) 
+normalized_sampled_points = dat/norm_factor
+sampling_mean_normalized = data.frame (rowMeans(normalized_sampled_points))
+sampling_mean_normalized = cbind (sampling_mean_normalized, rownames(sampling_mean_normalized))
+colnames(sampling_mean_normalized) = c('normalized_sampling_mean_merged_model_2293', 'rxns')
+
+df = NULL
+#df = merge (lb_ub, fva, all = TRUE)
+df= merge (fva_model_lb_ub, sampling_mean, all = TRUE)
+df = merge (df, min_max_sampling, all = TRUE)
+df = merge (df, sampling_mean_normalized)
+write.table (df, file = 'sampled_merged_model_2293_flux_analysis_span_analysis.txt', sep = '\t', quote = FALSE, row.names = FALSE)
+```
+
