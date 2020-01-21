@@ -1,0 +1,46 @@
+# quast for assembly stats
+python quast.py -R /home/mohameam/Documents/Projects/ETEC_vibrio/VCH_ref_GCF_000006745.1_ASM674v1_genomic.fna -o /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/quast_output_vch /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/VCH_l200.fasta
+
+python quast.py -R /home/mohameam/Documents/Projects/ETEC_vibrio/ETEC_ref_GCF_000210475.1_ASM21047v1_genomic.fna -o /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/quast_output_E36_g /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/E36_g_l200.fasta
+python quast.py -R /home/mohameam/Documents/Projects/ETEC_vibrio/ETEC_ref_GCF_000210475.1_ASM21047v1_genomic.fna -o /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/quast_output_E36_p /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/E36_p_l200.fasta
+python quast.py -R /home/mohameam/Documents/Projects/ETEC_vibrio/ETEC_ref_GCF_000210475.1_ASM21047v1_genomic.fna -o /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/quast_output_E36_g_p /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/E36_g_p_l200.fasta
+
+python quast.py -R /home/mohameam/Documents/Projects/ETEC_vibrio/ETEC_ref_GCF_000210475.1_ASM21047v1_genomic.fna -o /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/quast_output_E616_g /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/E616_g_l200.fasta
+python quast.py -R /home/mohameam/Documents/Projects/ETEC_vibrio/ETEC_ref_GCF_000210475.1_ASM21047v1_genomic.fna -o /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/quast_output_E616_p /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/E616_p_l200.fasta
+python quast.py -R /home/mohameam/Documents/Projects/ETEC_vibrio/ETEC_ref_GCF_000210475.1_ASM21047v1_genomic.fna -o /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/quast_output_E616_g_p /home/mohameam/Documents/Projects/ETEC_vibrio/genome_data/assemblies/E616_g_p_l200.fasta
+
+
+
+
+# check %alignment of reads to scaffolds > 200bp 
+# discard contigs less than 200 bp since NCBI doesn't accept shorter contigs using removesmalls.pl
+# run at cbrc cluster dragon node
+# bowtie2-build scaffolds.fasta assem_ind
+# bowtie2 -x assem_ind -1 trimmed_1.fastq -2 trimmed_2.fastq > mapped_reads2spades.sam
+
+bowtie2-build E36_g_l200.fasta E36_g
+bowtie2 -x E36_g -1 CCF123_E36_g_1_val_1.fq.gz -2 CCF123_E36_g_2_val_2.fq.gz > E36_g.sam
+
+bowtie2-build E36_g_p_l200.fasta E36_g_p
+bowtie2 -x E36_g_p -1 CCF127_E36_1_val_1.fq.gz -2 CCF127_E36_2_val_2.fq.gz > E36_g_p.sam
+
+bowtie2-build E36_p_l200.fasta E36_p
+bowtie2 -x E36_p -1 CCF125_E36_p_1_val_1.fq.gz -2 CCF125_E36_p_2_val_2.fq.gz > E36_p.sam
+
+
+bowtie2-build E616_g_l200.fasta E616_g
+bowtie2 -x E616_g -1 CCF122_VCH_1_val_1.fq.gz -2 CCF122_VCH_2_val_2.fq.gz > VCH_to_E616_g.sam
+bowtie2 -x E616_g -1 CCF124_E616_g_1_val_1.fq.gz -2 CCF124_E616_g_2_val_2.fq.gz > E616_g_to_E616_g.sam
+
+bowtie2-build E616_g_p_l200.fasta E616_g_p
+bowtie2 -x E616_g_p -1 CCF128_E616_1_val_1.fq.gz -2 CCF128_E616_2_val_2.fq.gz > E616_g_p.sam
+
+bowtie2-build E616_p_l200.fasta E616_p
+bowtie2 -x E616_p -1 CCF126_E616_p_1_val_1.fq.gz -2 CCF126_E616_p_2_val_2.fq.gz > E616_p.sam
+
+bowtie2-build VCH_l200.fasta VCH
+bowtie2 -x VCH -1 CCF122_VCH_1_val_1.fq.gz -2 CCF122_VCH_2_val_2.fq.gz > VCH_to_VCH.sam
+bowtie2 -x VCH -1 CCF124_E616_g_1_val_1.fq.gz -2 CCF124_E616_g_2_val_2.fq.gz > E616_g_to_VCH.sam
+
+
+

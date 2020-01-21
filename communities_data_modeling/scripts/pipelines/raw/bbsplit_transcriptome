@@ -1,0 +1,100 @@
+# trying solutions from biostarts
+# https://www.biostars.org/p/238650/#239013
+#1-Assemble X and Y genomes separately, using both RNAseq and DNAseq - probably do diginorm first to reduce the RNAseq bias
+#2-Anotate using prokka
+#3-use bbsplit to find reads that map uniquely to X or to Y in all three RNAseq datasets (X, Y and X+Y)
+#4-Use only this subset for the DGE analysis.
+
+
+# bbsplit
+# VCH
+bbsplit.sh build=1 in1=../S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R1_001_val_1.fq.gz in2=../S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_vch_rep_1_%.fq outu1=clean_vch_rep_1_1.fq outu2=clean_vch_rep_1_2.fq
+bbsplit.sh build=1 in1=../S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R1_001_val_1.fq.gz in2=../S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_vch_rep_2_%.fq outu1=clean_vch_rep_2_1.fq outu2=clean_vch_rep_2_2.fq
+bbsplit.sh build=1 in1=../S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R1_001_val_1.fq.gz in2=../S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_vch_rep_3_%.fq outu1=clean_vch_rep_3_1.fq outu2=clean_vch_rep_3_2.fq
+
+# E36
+bbsplit.sh build=1 in1=../S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R1_001_val_1.fq.gz in2=../S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_e36_rep_1_%.fq outu1=clean_e36_rep_1_1.fq outu2=clean_e36_rep_1_2.fq
+bbsplit.sh build=1 in1=../S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R1_001_val_1.fq.gz in2=../S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_e36_rep_2_%.fq outu1=clean_e36_rep_2_1.fq outu2=clean_e36_rep_2_2.fq
+bbsplit.sh build=1 in1=../S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R1_001_val_1.fq.gz in2=../S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_e36_rep_3_%.fq outu1=clean_e36_rep_3_1.fq outu2=clean_e36_rep_3_2.fq
+
+#VCH+E36
+bbsplit.sh build=1 in1=../S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R1_001_val_1.fq.gz in2=../S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_vch_e36_rep_1_%.fq outu1=clean_vch_e36_rep_1_1.fq outu2=clean_vch_e36_rep_1_2.fq
+bbsplit.sh build=1 in1=../S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R1_001_val_1.fq.gz in2=../S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_vch_e36_rep_2_%.fq outu1=clean_vch_e36_rep_2_1.fq outu2=clean_vch_e36_rep_2_2.fq
+bbsplit.sh build=1 in1=../S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R1_001_val_1.fq.gz in2=../S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R2_001_val_2.fq.gz ref=e36_transcriptome_trinity.fasta,vch_transcriptome_trinity.fasta  minratio=0.5 maxindel=500 minhits=1 basename=out_vch_e36_rep_3_%.fq outu1=clean_vch_e36_rep_3_1.fq outu2=clean_vch_e36_rep_3_2.fq
+
+# split interleaved reads into paired for mapping
+reformat.sh in=out_e36_rep_1_e36_transcriptome_trinity.fq out1=out_e36_rep_1_1.fastq out2=out_e36_rep_1_2.fastq
+reformat.sh in=out_e36_rep_2_e36_transcriptome_trinity.fq out1=out_e36_rep_2_1.fastq out2=out_e36_rep_2_2.fastq
+reformat.sh in=out_e36_rep_3_e36_transcriptome_trinity.fq out1=out_e36_rep_3_1.fastq out2=out_e36_rep_3_2.fastq
+
+reformat.sh in=out_vch_rep_1_vch_transcriptome_trinity.fq out1=out_vch_rep_1_1.fastq out2=out_vch_rep_1_2.fastq
+reformat.sh in=out_vch_rep_2_vch_transcriptome_trinity.fq out1=out_vch_rep_2_1.fastq out2=out_vch_rep_2_2.fastq
+reformat.sh in=out_vch_rep_3_vch_transcriptome_trinity.fq out1=out_vch_rep_3_1.fastq out2=out_vch_rep_3_2.fastq
+
+reformat.sh in=out_vch_e36_rep_1_vch_transcriptome_trinity.fq out1=out_vch_to_vch_e36_rep_1_1.fastq out2=out_vch_to_vch_e36_rep_1_2.fastq
+reformat.sh in=out_vch_e36_rep_2_vch_transcriptome_trinity.fq out1=out_vch_to_vch_e36_rep_2_1.fastq out2=out_vch_to_vch_e36_rep_2_2.fastq
+reformat.sh in=out_vch_e36_rep_3_vch_transcriptome_trinity.fq out1=out_vch_to_vch_e36_rep_3_1.fastq out2=out_vch_to_vch_e36_rep_3_2.fastq
+
+reformat.sh in=out_vch_e36_rep_1_e36_transcriptome_trinity.fq out1=out_e36_to_vch_e36_rep_1_1.fastq out2=out_e36_to_vch_e36_rep_1_2.fastq
+reformat.sh in=out_vch_e36_rep_2_e36_transcriptome_trinity.fq out1=out_e36_to_vch_e36_rep_2_1.fastq out2=out_e36_to_vch_e36_rep_2_2.fastq
+reformat.sh in=out_vch_e36_rep_3_e36_transcriptome_trinity.fq out1=out_e36_to_vch_e36_rep_3_1.fastq out2=out_e36_to_vch_e36_rep_3_2.fastq
+
+# assembly and annotation
+#spades and plamsid spades for E36
+prokka --compliant --addgenes --usegenus --force --centre C --locustag E E36.fa
+# spades assembly for VCH
+prokka --compliant --addgenes --usegenus --force --centre C --locustag V VCH.fa
+#merged two genomes
+cat E36.fa VCH.fa > merged_VCH_E36.fa
+prokka --compliant --addgenes --usegenus --force --centre C --locustag M merged_VCH_E36.fa
+
+
+# trying denovo transcriptome assembly using cleaned reads from bbsplit
+$TRINITY_HOME/Trinity --seqType fq --left bbsplit_results/out_vch_rep_1_1.fastq,bbsplit_results/out_vch_rep_2_1.fastq,bbsplit_results/out_vch_rep_3_1.fastq  --right bbsplit_results/out_vch_rep_1_2.fastq,bbsplit_results/out_vch_rep_2_2.fastq,bbsplit_results/out_vch_rep_3_2.fastq   --CPU 8 --max_memory 50G --min_contig_length 1000 --SS_lib_type RF --output trinity_output_VCH_22_24_bbsplit
+$TRINITY_HOME/Trinity --seqType fq --left bbsplit_results/out_e36_rep_1_1.fastq,bbsplit_results/out_e36_rep_2_1.fastq,bbsplit_results/out_e36_rep_3_1.fastq  --right bbsplit_results/out_e36_rep_1_2.fastq,bbsplit_results/out_e36_rep_2_2.fastq,bbsplit_results/out_e36_rep_3_2.fastq   --CPU 8 --max_memory 50G --min_contig_length 1000 --SS_lib_type RF --output trinity_output_E36_25_27_bbsplit
+
+$TRINITY_HOME/Trinity --seqType fq --left bbsplit_results/out_e36_to_vch_e36_rep_1_1.fastq,bbsplit_results/out_e36_to_vch_e36_rep_2_1.fastq,bbsplit_results/out_e36_to_vch_e36_rep_3_1.fastq  --right bbsplit_results/out_e36_to_vch_e36_rep_1_2.fastq,bbsplit_results/out_e36_to_vch_e36_rep_2_2.fastq,bbsplit_results/out_e36_to_vch_e36_rep_3_2.fastq   --CPU 8 --max_memory 50G --min_contig_length 1000 --SS_lib_type RF --output trinity_output_E36_31_33_bbsplit
+$TRINITY_HOME/Trinity --seqType fq --left bbsplit_results/out_vch_to_vch_e36_rep_1_1.fastq,bbsplit_results/out_vch_to_vch_e36_rep_2_1.fastq,bbsplit_results/out_vch_to_vch_e36_rep_3_1.fastq  --right bbsplit_results/out_vch_to_vch_e36_rep_1_2.fastq,bbsplit_results/out_vch_to_vch_e36_rep_2_2.fastq,bbsplit_results/out_vch_to_vch_e36_rep_3_2.fastq   --CPU 8 --max_memory 50G --min_contig_length 1000 --SS_lib_type RF --output trinity_output_VCH_31_33_bbsplit
+
+# annotate
+blastx -query Trinity.fasta -db /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/uniprot_sprot.pep -out blastx.outfmt6 -evalue 1e-20 -num_threads 6 -max_target_seqs 1 -outfmt 6
+blastp -query Trinity.fasta -db /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/uniprot_sprot.pep -out blastp.outfmt6 -evalue 1e-20 -num_threads 6 -max_target_seqs 1 -outfmt 6
+
+# align and generate expression matrix for each set
+# VCH
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_vch_rep_1_1.fastq  --right ../bbsplit_results/out_vch_rep_1_2.fastq --transcripts Trinity.fasta --output_prefix VCH_rep_1 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_vch_rep_2_1.fastq  --right ../bbsplit_results/out_vch_rep_2_2.fastq --transcripts Trinity.fasta --output_prefix VCH_rep_2 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_vch_rep_3_1.fastq  --right ../bbsplit_results/out_vch_rep_3_2.fastq --transcripts Trinity.fasta --output_prefix VCH_rep_3 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto VCH_rep_1.kallisto/abundance.tsv VCH_rep_2.kallisto/abundance.tsv VCH_rep_3.kallisto/abundance.tsv 
+
+# VCH reads from VCH+E36 co-culture (bbsplit output)
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_vch_to_vch_e36_rep_1_1.fastq  --right ../bbsplit_results/out_vch_to_vch_e36_rep_1_2.fastq --transcripts Trinity.fasta --output_prefix VCH_E36_rep_1 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_vch_to_vch_e36_rep_2_1.fastq  --right ../bbsplit_results/out_vch_to_vch_e36_rep_2_2.fastq --transcripts Trinity.fasta --output_prefix VCH_E36_rep_2 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_vch_to_vch_e36_rep_3_1.fastq  --right ../bbsplit_results/out_vch_to_vch_e36_rep_3_2.fastq --transcripts Trinity.fasta --output_prefix VCH_E36_rep_3 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto VCH_E36_rep_1.kallisto/abundance.tsv VCH_E36_rep_2.kallisto/abundance.tsv VCH_E36_rep_3.kallisto/abundance.tsv 
+
+# perform DE -- VCH vs VCH+E36
+$TRINITY_HOME/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix DEG_counts_vch_vs_vch_e36_input_to_DESeq_trinity.txt --samples_file samples.csv --method DESeq2 --output DESeq2_trans_kallisto
+
+
+
+# E36
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_e36_rep_1_1.fastq  --right ../bbsplit_results/out_e36_rep_1_2.fastq --transcripts Trinity.fasta --output_prefix E36_rep_1 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_e36_rep_2_1.fastq  --right ../bbsplit_results/out_e36_rep_2_2.fastq --transcripts Trinity.fasta --output_prefix E36_rep_2 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_e36_rep_3_1.fastq  --right ../bbsplit_results/out_e36_rep_3_2.fastq --transcripts Trinity.fasta --output_prefix E36_rep_3 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto E36_rep_1.kallisto/abundance.tsv E36_rep_2.kallisto/abundance.tsv E36_rep_3.kallisto/abundance.tsv 
+  
+# E36 reads from VCH+E36 co-culture (bbsplit output)
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_e36_to_vch_e36_rep_1_1.fastq  --right ../bbsplit_results/out_e36_to_vch_e36_rep_1_2.fastq --transcripts Trinity.fasta --output_prefix E36_VCH_rep_1 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_VCH_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_e36_to_vch_e36_rep_2_1.fastq  --right ../bbsplit_results/out_e36_to_vch_e36_rep_2_2.fastq --transcripts Trinity.fasta --output_prefix E36_VCH_rep_2 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_VCH_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../bbsplit_results/out_e36_to_vch_e36_rep_3_1.fastq  --right ../bbsplit_results/out_e36_to_vch_e36_rep_3_2.fastq --transcripts Trinity.fasta --output_prefix E36_VCH_rep_3 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_VCH_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto E36_VCH_rep_1.kallisto/abundance.tsv E36_VCH_rep_2.kallisto/abundance.tsv E36_VCH_rep_3.kallisto/abundance.tsv 
+
+
+
+
+

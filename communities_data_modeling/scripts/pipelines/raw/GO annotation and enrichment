@@ -1,0 +1,9 @@
+export PATH=/home/mohameam/Documents/Projects/tools/interproscan/interproscan-5.23-62.0/:$PATH
+# E36 aa sequence as downloaded from PATRIC
+interproscan.sh  -i ~/Documents/Projects/VCH_ETEC/E36_316401_72_ptn.fasta -pa -b ~/Documents/Projects/VCH_ETEC/interpro_E36_316401_72_ptns -goterms
+
+# VCH
+interproscan.sh  -i ~/Documents/Projects/VCH_ETEC/VCH_243277_158_ptn.fasta -pa -b ~/Documents/Projects/VCH_ETEC/interpro_VCH_243277_158_ptns -goterms
+
+# E616
+interproscan.sh  -i ~/Documents/Projects/VCH_ETEC/E616_316401_73_ptn.fasta -pa -b ~/Documents/Projects/VCH_ETEC/interpro_E616_316401_73_ptns -goterms

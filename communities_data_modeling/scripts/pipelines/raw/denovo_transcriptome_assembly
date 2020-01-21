@@ -1,0 +1,101 @@
+
+# summary -- mapping to the transcriptome/co-transcriptome didn't work since the PC1 vs PC2 when clustering replicates were 95% vs 2% for kallisto and 99% vs 1% for RSEM
+# also the number of up and down regulated genes followed the same trend when comparing both ETEC and VCH to co cultures (more upregulated genes in the coculture relative to either VCH or ETEC)
+# decided to use the genomes
+
+# trinity RNASeq
+# https://github.com/trinityrnaseq/KrumlovTrinityWorkshopJan2017/wiki/Home/5c72631e7506779f5be934cd8404ebd6d08d522f
+# https://github.com/trinityrnaseq/BernWorkshop2016/wiki/Day_1_Afternoon_Quantitation
+
+# Trinity denovo assembly for VCH and E36 single culture
+# VCH
+$TRINITY_HOME/Trinity --seqType fq --left S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R1_001_val_1.fq.gz,S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R1_001_val_1.fq.gz,S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R1_001_val_1.fq.gz --right S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R2_001_val_2.fq.gz,S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R2_001_val_2.fq.gz,S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R2_001_val_2.fq.gz  --CPU 8 --max_memory 50G --min_contig_length 200 --SS_lib_type RF --output trinity_output_VCH_22_24_VCH_E36_31_33_single_culture
+# E36
+$TRINITY_HOME/Trinity --seqType fq --left S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R1_001_val_1.fq.gz,S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R1_001_val_1.fq.gz,S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R1_001_val_1.fq.gz --right S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R2_001_val_2.fq.gz,S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R2_001_val_2.fq.gz,S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R2_001_val_2.fq.gz  --CPU 8 --max_memory 50G --min_contig_length 200 --SS_lib_type RF --output trinity_output_E36_25_27_VCH_E36_31_33_single_culture
+
+# Trinity denovo assembly for VCH and E36 co culture
+$TRINITY_HOME/Trinity --seqType fq --left S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R1_001_val_1.fq.gz,S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R1_001_val_1.fq.gz,S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R1_001_val_1.fq.gz --right S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R2_001_val_2.fq.gz,S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R2_001_val_2.fq.gz,S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R2_001_val_2.fq.gz  --CPU 8 --max_memory 50G --min_contig_length 200 --SS_lib_type RF --output trinity_output_VCH_E36_31_33_co_culture
+
+# RSEM quantification -- alignment-based -- VCH
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R1_001_val_1.fq.gz  --right ../S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_1 --est_method RSEM  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_1.RSEM --SS_lib_type RF
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R1_001_val_1.fq.gz  --right ../S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_2 --est_method RSEM  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_2.RSEM --SS_lib_type RF
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R1_001_val_1.fq.gz  --right ../S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_3 --est_method RSEM  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_3.RSEM --SS_lib_type RF
+
+# Kallisto quantification -- alignment-free -- VCH
+# run kallisto with 30 bootstraps
+# TO DO: run kallisto with 100 booststraps
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R1_001_val_1.fq.gz  --right ../S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_1 --est_method kallisto --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R1_001_val_1.fq.gz  --right ../S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_2 --est_method kallisto  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R1_001_val_1.fq.gz  --right ../S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_3 --est_method kallisto  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+# RSEM quantification -- alignment-based -- VCH+E36
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R1_001_val_1.fq.gz  --right ../S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_E36_rep_1 --est_method RSEM  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_1.RSEM --SS_lib_type RF
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R1_001_val_1.fq.gz  --right ../S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_E36_rep_2 --est_method RSEM  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_2.RSEM --SS_lib_type RF
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R1_001_val_1.fq.gz  --right ../S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_E36_rep_3 --est_method RSEM  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_3.RSEM --SS_lib_type RF
+
+# Kallisto quantification -- alignment-free -- VCH+E36
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R1_001_val_1.fq.gz  --right ../S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R2_001_val_2.fq.gz --transcripts Trinity_vch_e36.fasta --output_prefix VCH_E36_rep_1 --est_method kallisto  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R1_001_val_1.fq.gz  --right ../S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R2_001_val_2.fq.gz --transcripts Trinity_vch_e36.fasta --output_prefix VCH_E36_rep_2 --est_method kallisto  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R1_001_val_1.fq.gz  --right ../S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R2_001_val_2.fq.gz --transcripts Trinity_vch_e36.fasta --output_prefix VCH_E36_rep_3 --est_method kallisto  --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_E36_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+# Kallisto quantification 
+# E36
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R1_001_val_1.fq.gz  --right ../S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_rep_1 --est_method kallisto --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R1_001_val_1.fq.gz  --right ../S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_rep_2 --est_method kallisto --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R1_001_val_1.fq.gz  --right ../S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_rep_3 --est_method kallisto --aln_method bowtie --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+
+# generate expression matrix -- VCH -- kallisto
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto VCH_E36_rep_1.kallisto/abundance.tsv VCH_E36_rep_2.kallisto/abundance.tsv VCH_E36_rep_3.kallisto/abundance.tsv 
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto VCH_rep_1.kallisto/abundance.tsv VCH_rep_2.kallisto/abundance.tsv VCH_rep_3.kallisto/abundance.tsv
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto E36_rep_1.kallisto/abundance.tsv E36_rep_2.kallisto/abundance.tsv E36_rep_3.kallisto/abundance.tsv
+
+
+
+# perform DE -- VCH vs VCH+E36
+$TRINITY_HOME/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix DEG_counts_vch_vs_vch_e36_input_to_DESeq_trinity.txt --samples_file samples.csv --method DESeq2 --output DESeq2_trans_kallisto
+
+
+# perform DE -- E36 vs VCH+E36
+$TRINITY_HOME/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix DEG_counts_E36_vs_vch_e36_input_to_DESeq_trinity.txt --samples_file samples.csv --method DESeq2 --output DESeq2_trans_RSEM
+
+# assess number of full length coding transcripts
+# blastx against uniprot
+blastx -query Trinity.fasta -db /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/uniprot_sprot.pep -out blastx.outfmt6 -evalue 1e-20 -num_threads 6 -max_target_seqs 1 -outfmt 6
+# counts number of coding transcripts
+$TRINITY_HOME/util/analyze_blastPlus_topHit_coverage.pl blastx.outfmt6 trinity_out_dir/Trinity.fasta data/mini_sprot.pep | column -t
+
+# transdecoder
+$TRANSDECODER_HOME/TransDecoder.LongOrfs -t Trinity.fasta
+$TRANSDECODER_HOME/TransDecoder.Predict -t Trinity.fasta
+
+# sequence homologies using predicted protein sequences only rather than all transcripts
+blastp -query Trinity.fasta.transdecoder.pep -db /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/uniprot_sprot.pep -out blastp.outfmt6 -evalue 1e-20 -num_threads 6 -max_target_seqs 1 -outfmt 6
+          
+# HMMER search against the Pfam database, 
+# and identify conserved domains that might be indicative or suggestive of function
+hmmscan --cpu 2 --domtblout TrinotatePFAM.out /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/Pfam-A.hmm Trinity.fasta.transdecoder.pep
+
+# generate Trinotate report
+export PATH=/home/mohameam/Documents/Projects/tools/sqlite-tools-linux-x86-3170000/:$PATH
+$TRINOTATE_HOME/Trinotate /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/Trinotate.sqlite init --gene_trans_map Trinity.fasta.gene_trans_map  --transcript_fasta Trinity.fasta --transdecoder_pep Trinity.fasta.transdecoder.pep
+$TRINOTATE_HOME/Trinotate /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/Trinotate.sqlite LOAD_swissprot_blastx  blastx.outfmt6
+$TRINOTATE_HOME/Trinotate /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/Trinotate.sqlite LOAD_swissprot_blastp blastp.outfmt6 
+$TRINOTATE_HOME/Trinotate /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/Trinotate.sqlite LOAD_pfam TrinotatePFAM.out 
+$TRINOTATE_HOME/Trinotate /home/mohameam/Documents/Projects/tools/Trinotate-3.0.1/Trinotate.sqlite report > Trinotate.xls
+$TRINOTATE_HOME/util/extract_GO_assignments_from_Trinotate_xls.pl --Trinotate_xls Trinotate.xls -T -I > Trinotate.xls.gene_ontology
+
+
+# pooled reads for control
+# pool reads from E36 and VCH single cultures and map against the co-transcriptome and then redo the differential expression analysis
+$TRINITY_HOME/Trinity --seqType fq --max_memory 20G --left S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R1_001_val_1.fq.gz,S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R1_001_val_1.fq.gz,S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R1_001_val_1.fq.gz,S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R1_001_val_1.fq.gz,S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R1_001_val_1.fq.gz,S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R1_001_val_1.fq.gz --right S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R2_001_val_2.fq.gz,S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R2_001_val_2.fq.gz,S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R2_001_val_2.fq.gz,S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R2_001_val_2.fq.gz,S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R2_001_val_2.fq.gz,S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R2_001_val_2.fq.gz --CPU 8 --max_memory 50G --min_contig_length 200 --SS_lib_type RF --output trinity_output_pooled_E36_25_27_VCH_22_24
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,21 @@
+# run at cbrc login
+module load mpi-openmpi/1.8.3-gcc-4.7.4-psm samtools
+module load gcc bowtie2 ncbi-blast+/2.3.0
+NUMPROC=`grep "^processor" /proc/cpuinfo | tail -n 1 | awk '{print $3}'`
+KMER=61
+BLASTDB=/data/dragon/mohameam/blobology/
+TAXDUMP=/data/dragon/mohameam/blobology/
+ASSEMBLY=E36.contigs.fasta
+RND_ASSEMBLY=random10k.$ASSEMBLY
+perl fastaqual_select.pl -f $ASSEMBLY -s r -n 10000 >$RND_ASSEMBLY
+blastn -task megablast -query $RND_ASSEMBLY -db $BLASTDB/nt -evalue 1e-5 -num_threads $NUMPROC -max_target_seqs 1 -outfmt '6 qseqid staxids' -out $RND_ASSEMBLY.nt.1e-5.megablast
+bowtie2-build $ASSEMBLY $ASSEMBLY
+LIBNAME=CCF127_E36
+bowtie2 -x $ASSEMBLY --very-fast-local -k 1 -t -p 12 --reorder --mm \
+        -U <(perl shuffleSequences_fastx.pl 4 <(zcat ${LIBNAME}_1.fastq.gz) <(zcat ${LIBNAME}_2.fastq.gz)) \
+        | samtools view -S -b -T $ASSEMBLY - >$ASSEMBLY.$LIBNAME.bowtie2.bam
+perl gc_cov_annotate.pl \
+  --blasttaxid $RND_ASSEMBLY.nt.1e-5.megablast \
+  --assembly $ASSEMBLY --bam *.bam --out blobplot.txt \
+  --taxdump $TAXDUMP --taxlist species order phylum superkingdom
+Rscript makeblobplot.R blobplot.txt 0.01 taxlevel_order

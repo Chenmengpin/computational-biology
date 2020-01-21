@@ -1,0 +1,59 @@
+# trinity RNASeq
+# https://github.com/trinityrnaseq/KrumlovTrinityWorkshopJan2017/wiki/Home/5c72631e7506779f5be934cd8404ebd6d08d522f
+# https://github.com/trinityrnaseq/BernWorkshop2016/wiki/Day_1_Afternoon_Quantitation
+# performing the analysis using the co-culture where the co-growing species are physically separated
+# CBRC cluster
+
+# Trinity denovo assembly for VCH and E36 single culture -- using physically seprated cultures
+# VCH
+$TRINITY_HOME/Trinity --seqType fq --left S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R1_001_val_1.fq.gz,S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R1_001_val_1.fq.gz,S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R1_001_val_1.fq.gz  --right S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R2_001_val_2.fq.gz,S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R2_001_val_2.fq.gz,S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R2_001_val_2.fq.gz --CPU 8 --max_memory 50G --min_contig_length 200 --SS_lib_type RF --output trinity_output_VCH_1_3_single_culture_insert
+# E36
+$TRINITY_HOME/Trinity --seqType fq --left S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R1_001_val_1.fq.gz,S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R1_001_val_1.fq.gz,S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R1_001_val_1.fq.gz --right S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R2_001_val_2.fq.gz,S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R2_001_val_2.fq.gz,S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R2_001_val_2.fq.gz  --CPU 8 --max_memory 50G --min_contig_length 200 --SS_lib_type RF --output trinity_output_E36_4_5_single_culture_insert
+
+# Trinity denovo assembly for VCH and E36 co culture
+$TRINITY_HOME/Trinity --seqType fq --left S_16_F0191_10-V52-in-presence-of-E36_Replicate-1_E-coli-Vibrio_S10_L003_R1_001_val_1.fq.gz,S_16_F0192_11-V52-in-presence-of-E36_Replicate-2_E-coli-Vibrio_S11_L003_R1_001_val_1.fq.gz,S_16_F0193_12-V52-in-presence-of-E36_Replicate-3_E-coli-Vibrio_S12_L003_R1_001_val_1.fq.gz --right S_16_F0191_10-V52-in-presence-of-E36_Replicate-1_E-coli-Vibrio_S10_L003_R2_001_val_2.fq.gz,S_16_F0192_11-V52-in-presence-of-E36_Replicate-2_E-coli-Vibrio_S11_L003_R2_001_val_2.fq.gz,S_16_F0193_12-V52-in-presence-of-E36_Replicate-3_E-coli-Vibrio_S12_L003_R2_001_val_2.fq.gz  --CPU 8 --max_memory 50G --min_contig_length 200 --SS_lib_type RF --output trinity_output_VCH_in_presence_of_E36_10_12_insert
+$TRINITY_HOME/Trinity --seqType fq --left S_16_F0197_16-E36-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S16_L003_R1_001_val_1.fq.gz,S_16_F0198_17-E36-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S17_L003_R1_001_val_1.fq.gz,S_16_F0199_18-E36-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S18_L003_R1_001_val_1.fq.gz --right S_16_F0197_16-E36-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S16_L003_R2_001_val_2.fq.gz,S_16_F0198_17-E36-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S17_L003_R2_001_val_2.fq.gz,S_16_F0199_18-E36-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S18_L003_R2_001_val_2.fq.gz  --CPU 8 --max_memory 50G --min_contig_length 200 --SS_lib_type RF --output trinity_output_E36_in_presence_of_VCH_16_18_insert
+
+# Kallisto quantification -- alignment-free -- VCH -- insert
+# run kallisto with 30 bootstraps
+# TO DO: run kallisto with 100 booststraps
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R1_001_val_1.fq.gz  --right ../S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_1 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R1_001_val_1.fq.gz  --right ../S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_2 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R1_001_val_1.fq.gz  --right ../S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_rep_3 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+# run kallisto with 30 bootstraps -- E36 -- insert
+# TO DO: run kallisto with 100 booststraps
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R1_001_val_1.fq.gz  --right ../S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_rep_1 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R1_001_val_1.fq.gz  --right ../S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_rep_2 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R1_001_val_1.fq.gz  --right ../S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_rep_3 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+# run kallisto with 30 bootstraps -- E36 in presence of VCH -- insert
+# TO DO: run kallisto with 100 booststraps
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0197_16-E36-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S16_L003_R1_001_val_1.fq.gz --right ../S_16_F0197_16-E36-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S16_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_with_VCH_rep_1 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_with_VCH_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0198_17-E36-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S17_L003_R1_001_val_1.fq.gz  --right ../S_16_F0198_17-E36-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S17_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_with_VCH_rep_2 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_with_VCH_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0199_18-E36-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S18_L003_R1_001_val_1.fq.gz  --right ../S_16_F0199_18-E36-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S18_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix E36_with_VCH_rep_3 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir E36_with_VCH_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+# run kallisto with 30 bootstraps -- VCH in presence of E36 -- insert
+# TO DO: run kallisto with 100 booststraps
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0191_10-V52-in-presence-of-E36_Replicate-1_E-coli-Vibrio_S10_L003_R1_001_val_1.fq.gz  --right ../S_16_F0191_10-V52-in-presence-of-E36_Replicate-1_E-coli-Vibrio_S10_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_with_E36_rep_1 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_with_E36_rep_1.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0192_11-V52-in-presence-of-E36_Replicate-2_E-coli-Vibrio_S11_L003_R1_001_val_1.fq.gz  --right ../S_16_F0192_11-V52-in-presence-of-E36_Replicate-2_E-coli-Vibrio_S11_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_with_E36_rep_2 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_with_E36_rep_2.kallisto --kallisto_add_opts '-b 30'
+$TRINITY_HOME/util/align_and_estimate_abundance.pl --seqType fq --left ../S_16_F0193_12-V52-in-presence-of-E36_Replicate-3_E-coli-Vibrio_S12_L003_R1_001_val_1.fq.gz  --right ../S_16_F0193_12-V52-in-presence-of-E36_Replicate-3_E-coli-Vibrio_S12_L003_R2_001_val_2.fq.gz --transcripts Trinity.fasta --output_prefix VCH_with_E36_rep_3 --est_method kallisto --trinity_mode --prep_reference --coordsort_bam  --output_dir VCH_with_E36_rep_3.kallisto --kallisto_add_opts '-b 30'
+
+# generate count matrices
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto VCH_rep_1.kallisto/abundance.tsv VCH_rep_2.kallisto/abundance.tsv VCH_rep_3.kallisto/abundance.tsv 
+
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto E36_rep_1.kallisto/abundance.tsv E36_rep_2.kallisto/abundance.tsv E36_rep_3.kallisto/abundance.tsv 
+
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto VCH_with_E36_rep_1.kallisto/abundance.tsv VCH_with_E36_rep_2.kallisto/abundance.tsv VCH_with_E36_rep_3.kallisto/abundance.tsv 
+
+$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method kallisto --name_sample_by_basedir --out_prefix Trinity_trans_kallisto E36_with_VCH_rep_1.kallisto/abundance.tsv E36_with_VCH_rep_2.kallisto/abundance.tsv E36_with_VCH_rep_3.kallisto/abundance.tsv 
+
+# perform DE -- VCH vs VCH+E36
+$TRINITY_HOME/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix DEG_counts_vch_vs_vch_e36_input_to_DESeq_trinity.txt --samples_file samples.csv --method DESeq2 --output DESeq2_trans_kallisto
+# 300 up in VCH vs VCH+E36 and 302 down.
+# perform DE -- E36 vs E36+VCH
+$TRINITY_HOME/Analysis/DifferentialExpression/run_DE_analysis.pl --matrix DEG_counts_e36_vs_vch_e36_input_to_DESeq_trinity.txt --samples_file samples.csv --method DESeq2 --output DESeq2_trans_kallisto
+# 686 upregulated and 620 downregulated
+
+
+

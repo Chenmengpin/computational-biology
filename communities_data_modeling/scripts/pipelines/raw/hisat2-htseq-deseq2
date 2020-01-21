@@ -1,0 +1,154 @@
+# new tuxedo (hisat2)
+# http://www.nature.com/nprot/journal/v11/n9/full/nprot.2016.095.html
+# build HISAT2 index
+export PATH=/data/dragon/mohameam/stringtie-1.2.4.Linux_x86_64/:$PATH
+export PATH=/data/dragon/mohameam/hisat2-2.0.4/:$PATH
+hisat2-build VCH.fa VCH_tran
+hisat2-build E36.fa E36_tran
+hisat2-build E616.fa E616_tran
+
+# use trimmed reads from trim_galore output
+# align
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R1_001_val_1.fq.gz   -2 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R2_001_val_2.fq.gz -S VCH_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R1_001_val_1.fq.gz  -2 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R2_001_val_2.fq.gz  -S VCH_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R1_001_val_1.fq.gz -2 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R2_001_val_2.fq.gz -S VCH_3.sam
+
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R1_001_val_1.fq.gz  -2 S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R2_001_val_2.fq.gz -S E36_1.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R1_001_val_1.fq.gz -2 S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R2_001_val_2.fq.gz -S E36_2.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R1_001_val_1.fq.gz -2 S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R2_001_val_2.fq.gz -S E36_3.sam
+
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0188_7-E616_Replicate-1_E-coli-Vibrio_S7_L003_R1_001_val_1.fq.gz -2 S_16_F0188_7-E616_Replicate-1_E-coli-Vibrio_S7_L003_R2_001_val_2.fq.gz -S E616_1.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0189_8-E616_Replicate-2_E-coli-Vibrio_S8_L003_R1_001_val_1.fq.gz -2 S_16_F0189_8-E616_Replicate-2_E-coli-Vibrio_S8_L003_R2_001_val_2.fq.gz -S E616_2.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0190_9-E616_Replicate-3_E-coli-Vibrio_S9_L003_R1_001_val_1.fq.gz -2 S_16_F0190_9-E616_Replicate-3_E-coli-Vibrio_S9_L003_R2_001_val_2.fq.gz -S E616_3_.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0191_10-V52-in-presence-of-E36_Replicate-1_E-coli-Vibrio_S10_L003_R1_001_val_1.fq.gz -2 S_16_F0191_10-V52-in-presence-of-E36_Replicate-1_E-coli-Vibrio_S10_L003_R2_001_val_2.fq.gz  -S VCH_E36_1.sam 
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0192_11-V52-in-presence-of-E36_Replicate-2_E-coli-Vibrio_S11_L003_R1_001_val_1.fq.gz -2 S_16_F0192_11-V52-in-presence-of-E36_Replicate-2_E-coli-Vibrio_S11_L003_R2_001_val_2.fq.gz -S VCH_E36_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0193_12-V52-in-presence-of-E36_Replicate-3_E-coli-Vibrio_S12_L003_R1_001_val_1.fq.gz -2 S_16_F0193_12-V52-in-presence-of-E36_Replicate-3_E-coli-Vibrio_S12_L003_R2_001_val_2.fq.gz -S VCH_E36_3.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0194_13-V52-in-presence-of-E616_Replicate-1_E-coli-Vibrio_S13_L003_R1_001_val_1.fq.gz -2 S_16_F0194_13-V52-in-presence-of-E616_Replicate-1_E-coli-Vibrio_S13_L003_R2_001_val_2.fq.gz  -S VCH_E616_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0195_14-V52-in-presence-of-E616_Replicate-2_E-coli-Vibrio_S14_L003_R1_001_val_1.fq.gz -2 S_16_F0195_14-V52-in-presence-of-E616_Replicate-2_E-coli-Vibrio_S14_L003_R2_001_val_2.fq.gz -S VCH_E616_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0196_15-V52-in-presence-of-E616_Replicate-3_E-coli-Vibrio_S15_L003_R1_001_val_1.fq.gz -2 S_16_F0196_15-V52-in-presence-of-E616_Replicate-3_E-coli-Vibrio_S15_L003_R2_001_val_2.fq.gz -S VCH_E616_3.sam
+
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0197_16-E36-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S16_L003_R1_001_val_1.fq.gz -2 S_16_F0197_16-E36-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S16_L003_R2_001_val_2.fq.gz -S E36_VCH_1.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0198_17-E36-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S17_L003_R1_001_val_1.fq.gz -2 S_16_F0198_17-E36-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S17_L003_R2_001_val_2.fq.gz -S E36_VCH_2.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0199_18-E36-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S18_L003_R1_001_val_1.fq.gz -2 S_16_F0199_18-E36-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S18_L003_R2_001_val_2.fq.gz -S E36_VCH_3.sam
+
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0200_19-E616-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S19_L004_R1_001_val_1.fq.gz -2 S_16_F0200_19-E616-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S19_L004_R2_001_val_2.fq.gz -S E616_VCH_1.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0201_20-E616-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S20_L004_R1_001_val_1.fq.gz -2 S_16_F0201_20-E616-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S20_L004_R2_001_val_2.fq.gz -S E616_VCH_2.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0202_21-E616-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S21_L004_R1_001_val_1.fq.gz -2 S_16_F0202_21-E616-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S21_L004_R2_001_val_2.fq.gz -S E616_VCH_3.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R1_001_val_1.fq.gz  -2 S_16_F0203_22-V52_Replicate-1_E-coli-Vibrio_S22_L004_R2_001_val_2.fq.gz -S VCH_co_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R1_001_val_1.fq.gz -2 S_16_F0204_23-V52_Replicate-2_E-coli-Vibrio_S23_L004_R2_001_val_2.fq.gz -S VCH_co_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R1_001_val_1.fq.gz -2 S_16_F0205_24-V52_Replicate-3_E-coli-Vibrio_S24_L004_R2_001_val_2.fq.gz -S VCH_co_3.sam
+
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R1_001_val_1.fq.gz -2 S_16_F0206_25-E36_Replicate-1_E-coli-Vibrio_S25_L004_R2_001_val_2.fq.gz -S E36_co_1.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R1_001_val_1.fq.gz -2 S_16_F0207_26-E36_Replicate-2_E-coli-Vibrio_S26_L004_R2_001_val_2.fq.gz -S E36_co_2.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R1_001_val_1.fq.gz -2 S_16_F0208_27-E36_Replicate-3_E-coli-Vibrio_S27_L004_R2_001_val_2.fq.gz -S E36_co_3.sam
+
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0209_28-E616_Replicate-1_E-coli-Vibrio_S28_L004_R1_001_val_1.fq.gz -2 S_16_F0209_28-E616_Replicate-1_E-coli-Vibrio_S28_L004_R2_001_val_2.fq.gz -S E616_co_1.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0210_29-E616_Replicate-2_E-coli-Vibrio_S29_L004_R1_001_val_1.fq.gz -2 S_16_F0210_29-E616_Replicate-2_E-coli-Vibrio_S29_L004_R2_001_val_2.fq.gz -S E616_co_2.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0211_30-E616_Replicate-3_E-coli-Vibrio_S30_L004_R1_001_val_1.fq.gz -2 S_16_F0211_30-E616_Replicate-3_E-coli-Vibrio_S30_L004_R2_001_val_2.fq.gz -S E616_co_3.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R1_001_val_1.fq.gz -2 S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R2_001_val_2.fq.gz -S VCH_E36_co_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R1_001_val_1.fq.gz -2 S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R2_001_val_2.fq.gz -S VCH_E36_co_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R1_001_val_1.fq.gz -2 S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R2_001_val_2.fq.gz -S VCH_E36_co_3.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0215_34-V52-plus-E616_Replicate-1_E-coli-Vibrio_S34_L004_R1_001_val_1.fq.gz -2 S_16_F0215_34-V52-plus-E616_Replicate-1_E-coli-Vibrio_S34_L004_R2_001_val_2.fq.gz -S VCH_E616_co_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0216_35-V52-plus-E616_Replicate-2_E-coli-Vibrio_S35_L004_R1_001_val_1.fq.gz -2 S_16_F0216_35-V52-plus-E616_Replicate-2_E-coli-Vibrio_S35_L004_R2_001_val_2.fq.gz -S VCH_E616_co_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0217_36-V52-plus-E616_Replicate-3_E-coli-Vibrio_S36_L004_R1_001_val_1.fq.gz -2 S_16_F0217_36-V52-plus-E616_Replicate-3_E-coli-Vibrio_S36_L004_R2_001_val_2.fq.gz -S VCH_E616_co_3.sam
+
+
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R1_001_val_1.fq.gz -2 S_16_F0212_31-V52-plus-E36_Replicate-1_E-coli-Vibrio_S31_L004_R2_001_val_2.fq.gz -S E36_VCH_co_1.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R1_001_val_1.fq.gz -2 S_16_F0213_32-V52-plus-E36_Replicate-2_E-coli-Vibrio_S32_L004_R2_001_val_2.fq.gz -S E36_VCH_co_2.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R1_001_val_1.fq.gz -2 S_16_F0214_33-V52-plus-E36_Replicate-3_E-coli-Vibrio_S33_L004_R2_001_val_2.fq.gz -S E36_VCH_co_3.sam
+
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0215_34-V52-plus-E616_Replicate-1_E-coli-Vibrio_S34_L004_R1_001_val_1.fq.gz -2 S_16_F0215_34-V52-plus-E616_Replicate-1_E-coli-Vibrio_S34_L004_R2_001_val_2.fq.gz -S E616_VCH_co_1.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0216_35-V52-plus-E616_Replicate-2_E-coli-Vibrio_S35_L004_R1_001_val_1.fq.gz -2 S_16_F0216_35-V52-plus-E616_Replicate-2_E-coli-Vibrio_S35_L004_R2_001_val_2.fq.gz -S E616_VCH_co_2.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0217_36-V52-plus-E616_Replicate-3_E-coli-Vibrio_S36_L004_R1_001_val_1.fq.gz -2 S_16_F0217_36-V52-plus-E616_Replicate-3_E-coli-Vibrio_S36_L004_R2_001_val_2.fq.gz -S E616_VCH_co_3.sam
+
+
+
+# cross mapping to remove spurious reads
+# the % of cross mapped reads didn't exceed 1%, so I decided not to deop any reads
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R1_001_val_1.fq.gz -2 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R2_001_val_2.fq.gz -S cross_mapped_VCH2E36_1.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R1_001_val_1.fq.gz -2 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R2_001_val_2.fq.gz -S cross_mapped_VCH2E36_2.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R1_001_val_1.fq.gz -2 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R2_001_val_2.fq.gz -S cross_mapped_VCH2E36_3.sam
+
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R1_001_val_1.fq.gz -2 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R2_001_val_2.fq.gz -S cross_mapped_VCH2E616_1.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R1_001_val_1.fq.gz -2 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R2_001_val_2.fq.gz -S cross_mapped_VCH2E616_2.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R1_001_val_1.fq.gz -2 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R2_001_val_2.fq.gz -S cross_mapped_VCH2E616_3.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R1_001_val_1.fq.gz -2 S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R2_001_val_2.fq.gz -S cross_mapped_E362VCH_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R1_001_val_1.fq.gz -2 S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R2_001_val_2.fq.gz -S cross_mapped_E362VCH_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R1_001_val_1.fq.gz -2 S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R2_001_val_2.fq.gz -S cross_mapped_E362VCH_3.sam
+
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0188_7-E616_Replicate-1_E-coli-Vibrio_S7_L003_R1_001_val_1.fq.gz -2 S_16_F0188_7-E616_Replicate-1_E-coli-Vibrio_S7_L003_R2_001_val_2.fq.gz -S cross_mapped_E6162VCH_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0189_8-E616_Replicate-2_E-coli-Vibrio_S8_L003_R1_001_val_1.fq.gz -2 S_16_F0189_8-E616_Replicate-2_E-coli-Vibrio_S8_L003_R2_001_val_2.fq.gz -S cross_mapped_E6162VCH_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0190_9-E616_Replicate-3_E-coli-Vibrio_S9_L003_R1_001_val_1.fq.gz -2 S_16_F0190_9-E616_Replicate-3_E-coli-Vibrio_S9_L003_R2_001_val_2.fq.gz -S cross_mapped_E6162VCH_3.sam
+
+
+# sort aligned files by name for HTSeq
+module load oracle-java/1.7.0.67
+module load picard
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E36_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E36_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E36_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E36_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E36_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E36_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E616_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E616_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E616_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E616_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E616_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E616_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_VCH_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_VCH_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_VCH_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_VCH_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_VCH_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_VCH_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_VCH_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_VCH_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_VCH_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_VCH_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_VCH_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_VCH_3.sam  SORT_ORDER=queryname
+
+
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_co_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_co_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_co_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_co_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_co_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_co_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_co_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_co_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_co_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_co_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_co_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_co_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_co_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_co_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_co_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_co_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_co_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_co_3.sam  SORT_ORDER=queryname
+
+
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E36_co_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E36_co_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E36_co_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E36_co_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E36_co_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E36_co_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E616_co_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E616_co_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E616_co_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E616_co_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/VCH_E616_co_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_VCH_E616_co_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_VCH_co_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_VCH_co_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_VCH_co_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_VCH_co_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E36_VCH_co_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E36_VCH_co_3.sam  SORT_ORDER=queryname
+
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_VCH_co_1.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_VCH_co_1.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_VCH_co_2.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_VCH_co_2.sam  SORT_ORDER=queryname
+java -jar $PICARD_JAR SortSam VALIDATION_STRINGENCY=SILENT   INPUT=/data/dragon/mohameam/RNAseq/E616_VCH_co_3.sam  OUTPUT=/data/dragon/mohameam/RNAseq/sorted_E616_VCH_co_3.sam  SORT_ORDER=queryname
+
+

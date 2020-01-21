@@ -1,0 +1,3 @@
+cat ../assemblies/E616_g_l200.fasta > VCH.fa
+cat ../assemblies/VCH_l200.fasta ../assemblies/E616_p_l200.fasta > E616.fa
+cat ../assemblies/E36_g_l200.fasta ../assemblies/E36_p_l200.fasta > E36.fa

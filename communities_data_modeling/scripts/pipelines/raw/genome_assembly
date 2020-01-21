@@ -1,0 +1,42 @@
+# this script contains the parameters and commaind lines used for assembling genomes and plasmids using spades 3.9 and a5_miseq
+# I used the --cov-cutoff auto, --careful in SPades
+# remove adapters first
+export PATH=/home/mohameam/Documents/Projects/tools/FastQC/:$PATH
+export PATH=/home/mohameam/Documents/Projects/tools/trim_galore_zip/:$PATH
+export PATH=/home/mohameam/Documents/Projects/tools/cutadapt-1.10/:$PATH
+trim_galore --nextera --fastqc --paired CCF122_VCH_1.fastq.gz CCF122_VCH_2.fastq.gz
+trim_galore --nextera --fastqc --paired CCF123_E36_g_1.fastq.gz CCF123_E36_g_2.fastq.gz
+trim_galore --nextera --fastqc --paired CCF124_E616_g_1.fastq.gz CCF124_E616_g_2.fastq.gz
+trim_galore --nextera --fastqc --paired CCF125_E36_p_1.fastq.gz CCF125_E36_p_2.fastq.gz 
+trim_galore --nextera --fastqc --paired CCF126_E616_p_1.fastq.gz CCF126_E616_p_2.fastq.gz
+trim_galore --nextera --fastqc --paired CCF127_E36_1.fastq.gz CCF127_E36_2.fastq.gz 
+trim_galore --nextera --fastqc --paired CCF128_E616_1.fastq.gz CCF128_E616_2.fastq.gz
+
+# run spades on trimmed reads
+export PATH=~/Documents/Projects/tools/SPAdes-3.9.0-Linux/bin/:$PATH
+spades.py -o ~/Documents/Projects/ETEC_vibrio/genome_data/spades_output_VCH_trimmed/ -1 CCF122_VCH_1_val_1.fq.gz -2 CCF122_VCH_2_val_2.fq.gz --cov-cutoff auto --careful
+
+# E36 separate genomic reads (plamids sequenced separately)
+spades.py -o ~/Documents/Projects/ETEC_vibrio/genome_data/spades_output_E36_trimmed/ -1 CCF123_E36_g_1_val_1.fq.gz -2 CCF123_E36_g_2_val_2.fq.gz --cov-cutoff auto --careful
+# E36 plasmid
+spades.py -o ~/Documents/Projects/ETEC_vibrio/genome_data/spades_output_E36_plasmid_trimmed/ --plasmid -1 CCF125_E36_p_1_val_1.fq.gz -2 CCF125_E36_p_2_val_2.fq.gz --cov-cutoff auto --careful
+
+
+# E616 separate genomic reads (plamids sequenced separately)
+spades.py -o ~/Documents/Projects/ETEC_vibrio/genome_data/spades_output_E616_trimmed/ -1 CCF124_E616_g_1_val_1.fq.gz -2 CCF124_E616_g_2_val_2.fq.gz --cov-cutoff auto --careful
+# E616 plasmid 
+spades.py -o ~/Documents/Projects/ETEC_vibrio/genome_data/spades_output_E616_plasmid_trimmed/ --plasmid -1 CCF126_E616_p_1_val_1.fq.gz -2 CCF126_E616_p_2_val_2.fq.gz --cov-cutoff auto --careful
+
+# pooled reads for E36 and E616
+spades.py -o ~/Documents/Projects/ETEC_vibrio/genome_data/spades_output_E616_g_p_trimmed/ -1 CCF128_E616_1_val_1.fq.gz -2 CCF128_E616_2_val_2.fq.gz --cov-cutoff auto --careful
+spades.py -o ~/Documents/Projects/ETEC_vibrio/genome_data/spades_output_E36_g_p_trimmed/ -1 CCF127_E36_1_val_1.fq.gz -2 CCF127_E36_2_val_2.fq.gz --cov-cutoff auto --careful
+
+
+
+
+export PATH=/home/mohameam/Documents/Projects/tools/a5_miseq_linux_20150522/bin/:$PATH
+# a5_miseq
+# vch genome reads
+a5_pipeline.pl CCF122_VCH_1.fastq.gz CCF122_VCH_2.fastq.gz VCH
+# a5 miseq for E36 and E616 pooled reads
+a5_pipeline.pl CCF127_E36_g_p_1.fastq.gz CCF127_E36_g_p_2.fastq.gz E36

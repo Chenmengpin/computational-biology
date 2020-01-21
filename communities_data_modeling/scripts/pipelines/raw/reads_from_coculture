@@ -1,0 +1,32 @@
+# cross mapping reads from co-cultures
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R1_001.fastq.gz -2 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R2_001.fastq.gz -S VCH_to_E36_1.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R1_001.fastq.gz -2 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R2_001.fastq.gz -S VCH_to_E36_2.sam
+hisat2 -p 8 --dta -x 356_tran -1 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R1_001.fastq.gz -2 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R2_001.fastq.gz -S VCH_TO_E36_3.sam
+
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R1_001.fastq.gz -2 S_16_F0182_1-V52_Replicate-1_E-coli-Vibrio_S1_L003_R2_001.fastq.gz -S VCH_to_E616_1.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R1_001.fastq.gz -2 S_16_F0183_2-V52_Replicate-2_E-coli-Vibrio_S2_L003_R2_001.fastq.gz -S VCH_to_E616_2.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R1_001.fastq.gz -2 S_16_F0184_3-V52_Replicate-3_E-coli-Vibrio_S3_L003_R2_001.fastq.gz -S VCH_to_E616_3.sam
+
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0191_10-V52-in-presence-of-E36_Replicate-1_E-coli-Vibrio_S10_L003_R1_001.fastq.gz -2 S_16_F0191_10-V52-in-presence-of-E36_Replicate-1_E-coli-Vibrio_S10_L003_R2_001.fastq.gz -S VCH_E36_1_to_E36.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0192_11-V52-in-presence-of-E36_Replicate-2_E-coli-Vibrio_S11_L003_R1_001.fastq.gz -2 S_16_F0192_11-V52-in-presence-of-E36_Replicate-2_E-coli-Vibrio_S11_L003_R2_001.fastq.gz -S VCH_E36_2_to_E36.sam
+hisat2 -p 8 --dta -x E36_tran -1 S_16_F0193_12-V52-in-presence-of-E36_Replicate-3_E-coli-Vibrio_S12_L003_R1_001.fastq.gz -2 S_16_F0193_12-V52-in-presence-of-E36_Replicate-3_E-coli-Vibrio_S12_L003_R2_001.fastq.gz -S VCH_E36_3_to_E36.sam
+ 
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0194_13-V52-in-presence-of-E616_Replicate-1_E-coli-Vibrio_S13_L003_R1_001.fastq.gz -2 S_16_F0194_13-V52-in-presence-of-E616_Replicate-1_E-coli-Vibrio_S13_L003_R2_001.fastq.gz -S VCH_E616_1_to_E616.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0195_14-V52-in-presence-of-E616_Replicate-2_E-coli-Vibrio_S14_L003_R1_001.fastq.gz -2 S_16_F0195_14-V52-in-presence-of-E616_Replicate-2_E-coli-Vibrio_S14_L003_R2_001.fastq.gz -S VCH_E616_2_to_E616.sam
+hisat2 -p 8 --dta -x E616_tran -1 S_16_F0196_15-V52-in-presence-of-E616_Replicate-3_E-coli-Vibrio_S15_L003_R1_001.fastq.gz -2 S_16_F0196_15-V52-in-presence-of-E616_Replicate-3_E-coli-Vibrio_S15_L003_R2_001.fastq.gz -S VCH_E616_3_to_E616.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R1_001.fastq.gz -2 S_16_F0185_4-E36_Replicate-1_E-coli-Vibrio_S4_L003_R2_001.fastq.gz -S E36_to_VCH_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R1_001.fastq.gz -2 S_16_F0186_5-E36_Replicate-2_E-coli-Vibrio_S5_L003_R2_001.fastq.gz -S E36_to_VCH_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R1_001.fastq.gz -2 S_16_F0187_6-E36_Replicate-3_E-coli-Vibrio_S6_L003_R2_001.fastq.gz -S E36_to_VCH_3.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0188_7-E616_Replicate-1_E-coli-Vibrio_S7_L003_R1_001.fastq.gz -2 S_16_F0188_7-E616_Replicate-1_E-coli-Vibrio_S7_L003_R2_001.fastq.gz -S E616_to_VCH_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0189_8-E616_Replicate-2_E-coli-Vibrio_S8_L003_R1_001.fastq.gz -2 S_16_F0189_8-E616_Replicate-2_E-coli-Vibrio_S8_L003_R2_001.fastq.gz -S E616_to_VCH_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0190_9-E616_Replicate-3_E-coli-Vibrio_S9_L003_R1_001.fastq.gz -2 S_16_F0190_9-E616_Replicate-3_E-coli-Vibrio_S9_L003_R2_001.fastq.gz -S E616_to_VCH_3.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0197_16-E36-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S16_L003_R1_001.fastq.gz -2 S_16_F0197_16-E36-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S16_L003_R2_001.fastq.gz -S E36_VCH_to_VCH_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0198_17-E36-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S17_L003_R1_001.fastq.gz -2 S_16_F0198_17-E36-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S17_L003_R2_001.fastq.gz -S E36_VCH_to_VCH_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0199_18-E36-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S18_L003_R1_001.fastq.gz -2 S_16_F0199_18-E36-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S18_L003_R2_001.fastq.gz -S E36_VCH_to_VCH_3.sam
+
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0200_19-E616-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S19_L004_R1_001.fastq.gz -2 S_16_F0200_19-E616-in-presence-of-V52_Replicate-1_E-coli-Vibrio_S19_L004_R2_001.fastq.gz -S E616_VCH_to_VCH_1.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0201_20-E616-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S20_L004_R1_001.fastq.gz -2 S_16_F0201_20-E616-in-presence-of-V52_Replicate-2_E-coli-Vibrio_S20_L004_R2_001.fastq.gz -S E616_VCH_to_VCH_2.sam
+hisat2 -p 8 --dta -x VCH_tran -1 S_16_F0202_21-E616-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S21_L004_R1_001.fastq.gz -2 S_16_F0202_21-E616-in-presence-of-V52_Replicate-3_E-coli-Vibrio_S21_L004_R2_001.fastq.gz -S E616_VCH_to_VCH_3.sam
