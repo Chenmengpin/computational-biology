@@ -1,0 +1,44 @@
+# the aim of this pipeline is to find chromosomal coordinates of transcription factor binding sites 
+# for regulons that are key to fetal developmental stages as identified by SCENIC
+
+# used FIMO from the MEME suite
+# FIMO scans a set of sequences for individual matches to each of the motifs you provide
+export PATH=$HOME/meme/bin:$HOME/meme/libexec/meme-5.1.0:$PATH
+
+# used JASPAR meme formatted core motifs obtained from http://jaspar.genereg.net/download/CORE/JASPAR2020_CORE_non-redundant_pfms_meme.txt
+# from the JASPAR file I extracted the motifs for each master TF (regulon name according to SCENIC) for three cell types (microglia, GABAprecursors and GABAinterneurons based on the heatmap of regulon*cell type)
+
+# I used hg38 genome build from ensemble 
+# for each chromosome, the fasta-get-markov in the MEME suite was used to generate a 5th-order Markov model of kmer frequencies:
+fasta-get-markov -m 5 hg38chromFA/chr$.fa > hg38_background_models/hg38.chr$.5th_order_background_model.txt
+
+# FIMO query 
+# used threshold of 1e-6 instead of 1e-4
+fimo --verbosity 2 --parse-genomic-coord --bfile hg38_background_models/hg38.chr$.5th_order_background_model.txt --thresh 1e-6 --text  motifs_JASPAR.txt hg38chromFA/chr$.fa > hg38.chr$.bed
+
+# cat FIMO output from separate chromosomes
+cat hg38.chr*.bed > hg38.chr.microglia.bed
+
+# convert FIMO output to sorted bed file 
+cat hg38.chr.microglia.bed | grep -v motif_alt_id | cut -f2-9 | tr '|' '\t' | sort -k1,1V -k2,2n > hg38.chr.microglia.sorted.bed
+# remove tab at end of line
+sed 's/\t$//' hg38.chr.microglia.sorted.bed > tmp1.bed
+# move first column (gene name) to be last we need to have the coorindates as the second and third columns
+awk '{first = $1; print $0, first}' tmp1.bed | cut -f2-7 > hg38.chr.microglia.sorted.bed
+# use sortBed to overcome out of order issues 
+sort -k1,1 -k2,2n hg38.chr.microglia.sorted.bed > tmp2.bed
+mv tmp2.bed hg38.chr.microglia.sorted.bed 
+
+# run bedtools closest to find sequences upstream, within and downstream target genes
+# reporting top 10 closest hits as this was more concordant with SCENIC predictions of regulons (i.e. target genes predicted to be regulated by particular TFs)
+# D reports the closest feature in B, and its distance to A as an extra column, and uses negative distances to report upstream features
+# When A is on the - strand, “upstream” means B has a higher (start,stop)
+# 0 distance means an overlap
+bedtools closest -a hg38Tables_ensembl.sorted.bed -b microglia/hg38.chr.microglia.sorted.bed -D a -k 10 > microglia/microglia_motifs_genes_output.bed
+
+# credits: 
+# https://bioinformatics.stackexchange.com/questions/2467/where-to-download-jaspar-tfbs-motif-bed-file
+# bedtools closest documentation: https://bedtools.readthedocs.io/en/latest/content/tools/closest.html
+
+
+

@@ -1,0 +1,860 @@
+---
+title: "SCENIC"
+author: "am"
+date: "29/11/2019"
+output: html_document
+---
+```{r}
+# https://rstudio.github.io/reticulate/articles/python_packages.html
+library (reticulate)
+use_condaenv('scenic_protocol', required = TRUE)
+```
+
+```{r}
+#devtools::install_github("aertslab/SCENIC@v1.1.1") 
+suppressPackageStartupMessages({
+  library (data.table)
+  library(extrafont)
+  library(SCENIC)
+  library(AUCell)
+  library(RcisTarget)
+  library(SCopeLoomR)
+  library(Seurat)
+  library (tibble)
+  library (dplyr)
+  library (tidyr)
+  library (tibble)
+  library (stringr)
+  library (igraph)
+  library (scales)
+  library (ggplot2)
+  library (leiden)
+  library(RColorBrewer)
+  library(qgraph)
+})
+```
+
+```{r}
+# import modules
+reticulate::import("pandas")
+reticulate::import ('numpy')
+reticulate::import ('glob')
+reticulate::import ('pickle')
+py_run_string('from arboreto.utils import load_tf_names')
+py_run_string('from arboreto.algo import grnboost2')
+py_run_string('from pyscenic.rnkdb import FeatherRankingDatabase as RankingDatabase')
+py_run_string('from pyscenic.utils import modules_from_adjacencies, load_motifs')
+py_run_string('from pyscenic.prune import prune2df, df2regulons')
+py_run_string('from pyscenic.aucell import aucell')
+reticulate:: import('seaborn')
+
+```
+
+```{r}
+# read adjacency matrix as pickle data
+getwd()
+adj <- py_load_object('../data/adjacencies_test.dataframe')
+regulons <- py_load_object('../data/regulons_asIncidMat') # 2.5
+regulomes <- read.csv('../data/regulomes_test.csv', header = TRUE)
+regulonTargetsInfo <- read.csv ('../data/auc_scores.csv', header = TRUE)
+regulonAUC <- read.csv('../data/auc_mtx.csv')
+# alternative method
+# require ('reticulate')
+#source_python('../scripts/pickle_reader.py')
+#regulons <- read_pickle_file('../data/regulons_asIncidMat')
+
+```
+
+```{r}
+# read table with unequal number of columsn (TF-targets)
+# https://sites.psu.edu/biomonika/2017/09/08/reading-text-files-with-variable-number-of-columns-in-r/
+no_col <- max(count.fields('../data/Tf2targets.csv', sep = ","))
+Tf_target <- read.table('../data/Tf2targets.csv',sep=",",fill=TRUE,header = F,col.names=c("chr", "start", "end", "length",1:no_col))
+
+rownames(Tf_target) = Tf_target$chr; Tf_target = Tf_target[,-1]
+
+# convert to list (r object)
+regulons <- as.list(as.data.frame(t(Tf_target)))
+
+# convert 2.5_regulons_asGeneSet to 2.6_regulons_asIncidMat
+incidList <- reshape2::melt(regulons)
+incidList <- incidList[!incidList$value == "", ]; incidList <- na.omit(incidList)
+incidMat <- table(incidList[,2], incidList[,1])
+
+# TODO NMF::aheatmap(incidMat)
+# TODO complex heatmap
+#saveRDS(incidMat, file=getIntName(scenicOptions, "regulons_incidMat"))
+length(regulons) 
+#summary(lengths(regulons))
+```
+
+```{r}
+# read in seurat object
+brain_data_A <- readRDS ('../data/brain.data.A.Rds')
+```
+
+```{r}
+# append cell assign annotation
+cell_assign <- read.csv('../data/cell_assign_annotation.csv'); cell_assign = cell_assign[,-1]
+cell_types = cell_assign$cell_type
+names(cell_types) = cell_assign$barcode
+brain_data_A <- AddMetaData(
+  object = brain_data_A, metadata = cell_types, col.name= 'cell_types'
+)
+colnames(brain_data_A@meta.data)[5] = c('time_point')
+```
+
+```{r}
+# average regulon activity by cell type or seurat clusters
+# seurat clusters
+cellInfo <- brain_data_A@meta.data
+rownames(regulonAUC) = regulonAUC[,1]; regulonAUC = regulonAUC[,-1]
+regulonAUC <- regulonAUC[onlyNonDuplicatedExtended(rownames(regulonAUC)),]
+
+regulonActivity_byCluster <- sapply(split(rownames(cellInfo), cellInfo$seurat_clusters), function(cells) rowMeans(t(regulonAUC)[,cells]))
+
+regulonActivity_byCluster_Scaled <- t(scale(t(regulonActivity_byCluster), center = T, scale=T))
+
+#pdf ('../plots/brain_data_A_seurat_clusters.pdf', width  = 8, height = 15 )
+pheatmap::pheatmap(regulonActivity_byCluster_Scaled, #fontsize_row=3, 
+                   color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100),fontsize_row = 5,
+                   treeheight_row=10, treeheight_col=10, border_color=NA)
+#dev.off()
+# cell types
+regulonActivity_byCellType <- sapply(split(rownames(cellInfo), cellInfo$cell_types), function(cells) rowMeans(t(regulonAUC)[,cells]))
+
+regulonActivity_byCellType_Scaled <- t(scale(t(regulonActivity_byCellType), center = T, scale=T))
+
+#pdf ('../plots/brain_data_A_cell_types.pdf', width  = 8, height = 15)
+pheatmap::pheatmap(regulonActivity_byCellType_Scaled, #fontsize_row=3, 
+                   color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), fontsize_row = 5, 
+                   treeheight_row=10, treeheight_col=10, border_color=NA)
+#dev.off()
+```
+
+```{r}
+# compare to AUC/regulons derived from the individual time points
+e10a <- read.csv('../data/individual_time_points/e10A/auc_mtx.csv'); e10a <- column_to_rownames(e10a, var = 'Cell'); 
+e11a <- read.csv('../data/individual_time_points/e11A/auc_mtx.csv'); e11a <- column_to_rownames(e11a, var = 'Cell'); 
+e12a <- read.csv('../data/individual_time_points/e12A/auc_mtx.csv'); e12a <- column_to_rownames(e12a, var = 'Cell'); 
+e13a <- read.csv('../data/individual_time_points/e13A/auc_mtx.csv'); e13a <- column_to_rownames(e13a, var = 'Cell'); 
+e14a <- read.csv('../data/individual_time_points/e14A/auc_mtx.csv'); e14a <- column_to_rownames(e14a, var = 'Cell'); 
+e15a <- read.csv('../data/individual_time_points/e15A/auc_mtx.csv'); e15a <- column_to_rownames(e15a, var = 'Cell'); 
+e16a <- read.csv('../data/individual_time_points/e16A/auc_mtx.csv'); e16a <- column_to_rownames(e16a, var = 'Cell'); 
+e17a <- read.csv('../data/individual_time_points/e17A/auc_mtx.csv'); e17a <- column_to_rownames(e17a, var = 'Cell'); 
+P00a <- read.csv('../data/individual_time_points/P0OA/auc_mtx.csv'); P00a <- column_to_rownames(P00a, var = 'Cell'); 
+P04a <- read.csv('../data/individual_time_points/P04A/auc_mtx.csv'); P04a <- column_to_rownames(P04a, var = 'Cell'); 
+P07a <- read.csv('../data/individual_time_points/P07A/auc_mtx.csv'); P07a <- column_to_rownames(P07a, var = 'Cell'); 
+P10a <- read.csv('../data/individual_time_points/P10A/auc_mtx.csv'); P10a <- column_to_rownames(P10a, var = 'Cell');
+
+e10a <- t(e10a)
+e11a <- t(e11a)
+e12a <- t(e12a)
+e13a <- t(e13a)
+e14a <- t(e14a)
+e15a <- t(e15a)
+e16a <- t(e16a)
+e17a <- t(e17a)
+P00a <- t(P00a)
+P04a <- t(P04a)
+P07a <- t(P07a)
+P10a <- t(P10a)
+
+e10a <- rownames_to_column(data.frame (e10a), var = 'cells')
+e11a <- rownames_to_column(data.frame (e11a), var = 'cells')
+e12a <- rownames_to_column(data.frame (e12a), var = 'cells')
+e13a <- rownames_to_column(data.frame (e13a), var = 'cells')
+e14a <- rownames_to_column(data.frame (e14a), var = 'cells')
+e15a <- rownames_to_column(data.frame (e15a), var = 'cells')
+e16a <- rownames_to_column(data.frame (e16a), var = 'cells')
+e17a <- rownames_to_column(data.frame (e17a), var = 'cells')
+P00a <- rownames_to_column(data.frame (P00a), var = 'cells')
+P04a <- rownames_to_column(data.frame (P04a), var = 'cells')
+P07a <- rownames_to_column(data.frame (P07a), var = 'cells')
+P10a <- rownames_to_column(data.frame (P10a), var = 'cells')
+
+# merge data and compute correlation between auc activity scores based on indepdenent time points vs replicate A
+regulonActivity_byTimePoint <- full_join(e10a, e11a, by ='cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e11a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e12a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e13a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e14a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e15a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e16a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e17a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, P00a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, P04a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, P07a, by = 'cells')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, P10a, by = 'cells')
+
+colnames(regulonActivity_byTimePoint) <- str_replace(colnames(regulonActivity_byTimePoint), '\\.', '-')
+regulonActivity_byTimePoint <- column_to_rownames(regulonActivity_byTimePoint, var = 'cells')
+```
+
+```{r}
+# compute correlation
+dat_replicate_a <- regulonAUC
+dat_ind_time_points <- regulonActivity_byTimePoint
+#dat_ind_time_points <- tibble::column_to_rownames(dat_ind_time_points, var = 'cells')
+
+common_cells <- intersect(rownames(dat_replicate_a), colnames(dat_ind_time_points))
+common_regulons <- intersect(colnames(dat_replicate_a), rownames(dat_ind_time_points))
+
+dat_replicate_a <- dat_replicate_a[common_cells, common_regulons]; dat_replicate_a <- t(dat_replicate_a); dat_replicate_a [is.na(dat_replicate_a)] <- 0
+dat_ind_time_points <- dat_ind_time_points[common_regulons, common_cells]; dat_ind_time_points[is.na(dat_ind_time_points)] <- 0
+
+# compute correlation
+cor.test(as.matrix(dat_replicate_a), as.matrix(dat_ind_time_points), method = 'spearman')
+```
+
+```{r}
+# generate a scatter plot for visualising the corrleation 
+# regulons
+dat_replicate_a <- rownames_to_column(data.frame(dat_replicate_a), var = 'regulons')
+dat_ind_time_points <- rownames_to_column(data.frame(dat_ind_time_points), var = 'regulons')
+dat <- inner_join(dat_replicate_a, dat_ind_time_points, by = 'regulons')
+dat <- reshape2::melt(dat)
+dat$variable <- str_replace(dat$variable, '\\.x', '_repA')
+dat$variable <- str_replace(dat$variable, '\\.y', '_ind')
+
+tmp <- sapply (strsplit(dat$variable, "_"), function (x) paste (x[2]))
+dat <- cbind (dat, tmp)
+tmp <- sapply (strsplit(dat$cell, '\\.'), function (x) paste (x[1]))
+```
+
+
+```{r}
+# TODO barplot for number of cells Vs number of regulons at each time point
+e10a_seurat <- readRDS ('../data/individual_time_points/e10A/brain.data.e10A.Rds')
+e11a_seurat <- readRDS ('../data/individual_time_points/e11A/brain.data.e11A.Rds')
+e12a_seurat <- readRDS ('../data/individual_time_points/e12A/brain.data.e12A.Rds')
+e13a_seurat <- readRDS ('../data/individual_time_points/e13A/brain.data.e13A.Rds')
+e14a_seurat <- readRDS ('../data/individual_time_points/e14A/brain.data.e14A.Rds')
+e15a_seurat <- readRDS ('../data/individual_time_points/e15A/brain.data.e15A.Rds')
+e16a_seurat <- readRDS ('../data/individual_time_points/e16A/brain.data.e16A.Rds')
+e17a_seurat <- readRDS ('../data/individual_time_points/e17A/brain.data.e17A.Rds')
+P00a_seurat <- readRDS ('../data/individual_time_points/P0OA/brain.data.P0OA.Rds')
+P04a_seurat <- readRDS ('../data/individual_time_points/P04A/brain.data.P04A.Rds')
+P07a_seurat <- readRDS ('../data/individual_time_points/P07A/brain.data.P07A.Rds')
+P10a_seurat <- readRDS ('../data/individual_time_points/P10A/brain.data.P10A.Rds')
+
+e10a <- sapply(split(rownames(e10a), Idents(e10a_seurat)), function(cells) rowMeans(t(e10a)[,cells])); colnames(e10a) <- paste("e10A", colnames(e10a), sep = '_')
+e11a <- sapply(split(rownames(e11a), Idents(e11a_seurat)), function(cells) rowMeans(t(e11a)[,cells])); colnames(e11a) <- paste("e11A", colnames(e11a), sep = '_')
+e12a <- sapply(split(rownames(e12a), Idents(e12a_seurat)), function(cells) rowMeans(t(e12a)[,cells])); colnames(e12a) <- paste("e12A", colnames(e12a), sep = '_')
+e13a <- sapply(split(rownames(e13a), Idents(e13a_seurat)), function(cells) rowMeans(t(e13a)[,cells])); colnames(e13a) <- paste("e13A", colnames(e13a), sep = '_')
+e14a <- sapply(split(rownames(e14a), Idents(e14a_seurat)), function(cells) rowMeans(t(e14a)[,cells])); colnames(e14a) <- paste("e14A", colnames(e14a), sep = '_')
+e15a <- sapply(split(rownames(e15a), Idents(e15a_seurat)), function(cells) rowMeans(t(e15a)[,cells])); colnames(e15a) <- paste("e15A", colnames(e15a), sep = '_')
+e16a <- sapply(split(rownames(e16a), Idents(e16a_seurat)), function(cells) rowMeans(t(e16a)[,cells])); colnames(e16a) <- paste("e16A", colnames(e16a), sep = '_')
+e17a <- sapply(split(rownames(e17a), Idents(e17a_seurat)), function(cells) rowMeans(t(e17a)[,cells])); colnames(e17a) <- paste("e17A", colnames(e17a), sep = '_')
+P00a <- sapply(split(rownames(P00a), Idents(P00a_seurat)), function(cells) rowMeans(t(P00a)[,cells])); colnames(P00a) <- paste("P00A", colnames(P00a), sep = '_')
+P04a <- sapply(split(rownames(P04a), Idents(P04a_seurat)), function(cells) rowMeans(t(P04a)[,cells])); colnames(P04a) <- paste("P04A", colnames(P04a), sep = '_')
+P07a <- sapply(split(rownames(P07a), Idents(P07a_seurat)), function(cells) rowMeans(t(P07a)[,cells])); colnames(P07a) <- paste("P07A", colnames(P07a), sep = '_')
+P10a <- sapply(split(rownames(P10a), Idents(P10a_seurat)), function(cells) rowMeans(t(P10a)[,cells])); colnames(P10a) <- paste("P10A", colnames(P10a), sep = '_')
+
+e10a <- tibble::rownames_to_column(data.frame (e10a), var = 'Regulons')
+e11a <- tibble::rownames_to_column(data.frame (e11a), var = 'Regulons')
+e12a <- tibble::rownames_to_column(data.frame (e12a), var = 'Regulons')
+e13a <- tibble::rownames_to_column(data.frame (e13a), var = 'Regulons')
+e14a <- tibble::rownames_to_column(data.frame (e14a), var = 'Regulons')
+e15a <- tibble::rownames_to_column(data.frame (e15a), var = 'Regulons')
+e16a <- tibble::rownames_to_column(data.frame (e16a), var = 'Regulons')
+e17a <- tibble::rownames_to_column(data.frame (e17a), var = 'Regulons')
+P00a <- tibble::rownames_to_column(data.frame (P00a), var = 'Regulons')
+P04a <- tibble::rownames_to_column(data.frame (P04a), var = 'Regulons')
+P07a <- tibble::rownames_to_column(data.frame (P07a), var = 'Regulons')
+P10a <- tibble::rownames_to_column(data.frame (P10a), var = 'Regulons')
+
+# join all time points keeping union of regulons, missing regulons are indicated by NA
+regulonActivity_byTimePoint <- NULL; 
+regulonActivity_byTimePoint <- full_join(e10a, e11a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e12a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e13a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e14a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e15a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e16a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, e17a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, P00a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, P04a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, P07a, by = 'Regulons')
+regulonActivity_byTimePoint <- full_join(regulonActivity_byTimePoint, P10a, by = 'Regulons')
+
+# replace NA by zero
+regulonActivity_byTimePoint[is.na (regulonActivity_byTimePoint)] <- 0 
+# dim(regulonActivity_byTimePoint)
+# 697 153
+```
+
+```{r}
+# visualise
+library (tibble)
+regulonActivity_byTimePoint <- column_to_rownames(regulonActivity_byTimePoint, var = 'Regulons')
+regulonActivity_byTimePoint_Scaled <- na.omit(t(scale(t(regulonActivity_byTimePoint), center = T, scale=T)))
+
+# heatmap annotation 
+annotation <- sapply (strsplit (colnames(regulonActivity_byTimePoint), "_"), function (x) paste (x[1]))
+annotation <- data.frame (annotation)
+rownames(annotation) <- colnames(regulonActivity_byTimePoint)
+cell_type <- sapply (strsplit (rownames(annotation), "_"), function (x) paste (x[2]))
+annotation <- cbind (annotation, cell_type); annotation <- annotation[-1, ]
+colnames(annotation) = c('time point', 'seurat cluster')
+
+pheatmap::pheatmap(regulonActivity_byTimePoint_Scaled, fontsize_row=1, fontsize_col = 4,  
+                   color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), annotation= annotation, treeheight_row=10, treeheight_col=10, border_color=NA)
+```
+
+```{r}
+# compute incidence and percentage relative to AUC activity scores
+Reg <- incidMat   #TF x genes #incidMat
+R_comb <- combn(rownames(Reg), m=2)  #Create pairwise combinations
+
+# Create required dataframe 
+Reg1 = Reg2  = nR1_genes = nR2_genes = nR1_R2_genes = R1_R2_genes = NULL;
+ 
+for (comb in 1:ncol(R_comb)) {
+  #two_genes <- print(as.character(gene_comb2[,combo]))
+ 
+  two_R <- as.character(R_comb[,comb])
+  R1 <- data.frame(Reg[which(rownames(Reg) == two_R[1]),])
+  R2 <- data.frame(Reg[which(rownames(Reg) == two_R[2]),])
+  R1_2 <- cbind(R1, R2)
+  colnames(R1_2) <- c("R1", "R2")
+  nR1_2 <- length(which(R1_2[,1] > 0 & R1_2[,2] > 0))
+  R1R2_genes <- rownames(R1_2[which(R1_2[,1] > 0 & R1_2[,2] > 0),])
+  R1R2_genes <- paste(R1R2_genes,collapse=",")
+  #common_Regs <- paste(cat(rownames(samples1_2[which(samples1_2[,1] > 0 & samples1_2[,2] > 0),]), sep = “,”))
+  Reg1 = c(Reg1, two_R[1])
+  Reg2 = c(Reg2, two_R[2])
+  nR1_R2_genes = c(nR1_R2_genes, nR1_2)
+  nR1_genes = c(nR1_genes, sum(R1_2[,1]))
+  nR2_genes = c(nR2_genes, sum(R1_2[,2]))
+ R1_R2_genes = c(R1_R2_genes, R1R2_genes[1])
+ }
+ Regulon_comb <- data.frame(cbind(Reg1 ,Reg2 ,nR1_R2_genes, nR1_genes , nR2_genes ,R1_R2_genes))
+ Regulon_comb$R1_R2_genes <- as.character(Regulon_comb$R1_R2_genes)
+ Regulon_comb$R1_R2_genes[Regulon_comb$R1_R2_genes == ""] <- "NA"
+ saveRDS(Regulon_comb, file = '../data/Regulon_comb_replicate_A.Rds')
+
+ 
+## Calculate percentage and incidence from the incidence matrix
+# Percentage -> proportion of overlapping genes
+# % = nR1_R2_genes/(nR1_genes + nR2_genes) - nR1_R2_genes
+
+# Incidence -> proportion of genes regulated by the TF pair out of total
+# incidence = (nR1_genes + nR2_genes - nR1_R2_genes)/number_of_genes_in_regulons
+
+tab <- Regulon_comb
+tab$R1_R2_genes <- NULL
+#tab <- tab[subset(rownames(tab), tab$nR1_R2_genes != 0),]  #Remove TFs that do not have overlapping genes
+# I commented this line because we need to look at regulons that do not have overlapping genes but have correlated activity scores
+#Reg <- readRDS("int/2.6_regulons_asIncidMat.Rds")
+tab <- tab %>% 
+cbind(percentage =(round(  as.numeric(as.character(tab$nR1_R2_genes))   /  ((as.numeric(as.character(tab$nR1_genes))+as.numeric(as.character(tab$nR2_genes))) - as.numeric(as.character(tab$nR1_R2_genes)))  ,3))*100) %>% 
+cbind(incidence = round(((as.numeric(as.character(tab$nR1_genes))+as.numeric(as.character(tab$nR2_genes))) - as.numeric(as.character(tab$nR1_R2_genes))) /ncol(Reg),3))
+
+
+tab <- tab %>% separate(Reg2, c("Regulon2","suffix2"), sep = "_")
+tab <- tab %>% separate(Reg1, c("Regulon1","suffix1"), sep = "_")
+tab <- tab[subset(rownames(tab), tab$Regulon1 != tab$Regulon2),]
+
+
+#for (i in nrow(tab)){
+#if(tab[i,]$suffix1 == "extended"){
+reg1 <- paste(tab$Regulon1, tab$suffix1, sep = "_")
+#}}
+#tab[,1] <- reg1
+
+#for (i in nrow(tab)){
+#if(tab[i,]$suffix == "extended"){
+reg2 <- paste(tab$Regulon2, tab$suffix2, sep = "_")
+#}}
+#tab[,3] <- reg2
+
+#Remove NA
+reg1 <- gsub("_NA","",reg1)
+reg2 <- gsub("_NA","",reg2)
+
+#Repopulate the dataframe
+tab$Regulon1 <- reg1
+tab$Regulon2 <- reg2
+
+tab$suffix1 <- NULL
+tab$suffix2 <- NULL
+
+# commented this line because we need to look at correlated regulons by activity scores that might have non-overlapping genes
+#Keep TF pairs regulating more than 15% of overlapping genes
+#tab1 <- tab[subset(rownames(tab),tab$percentage > 20),]
+```
+
+```{r}
+# Calculate correlation between regulons based on activity scores
+# library(AUCell)
+#AUC <- readRDS("int/3.4_regulonAUC.Rds") # Regulons * cells
+#AUC <- getAUC(AUC)
+AUC <- regulonAUC
+AUC <- cor(AUC, method="spearman") # potentially consider MI
+AUC <- data.frame(row=rownames(AUC)[row(AUC)], col=colnames(AUC)[col(AUC)], corr=c(AUC))
+
+AUC <- AUC %>% separate(row, c("Reg1","G1"), sep=" ")
+AUC <- AUC %>% separate(col, c("Reg2","G2"), sep=" ")
+
+colnames(AUC) [1] <- c('Regulon1')
+colnames(AUC) [3] <- c('Regulon2')
+
+AUC$G1 <- NULL
+AUC$G2 <- NULL
+
+# check correlation values distribution
+ggplot(AUC, aes(x = corr)) + geom_density()
+ggplot(AUC, aes(x = corr)) + geom_histogram(binwidth = .1)
+
+quantile(AUC$corr)
+#          0%          25%          50%          75%         100% 
+#-0.740948674 -0.062414723  0.001366811  0.080888892  1.000000000 
+
+# filter by corr based on activity score
+pos <- AUC[AUC$corr >= 0.7, ]
+neg <- AUC[AUC$corr <= -0.6, ]
+dim(pos)
+# 412    3
+dim(neg)
+# 152   3
+AUC_sig <- rbind (pos, neg)
+```
+
+```{r}
+# dot plot for incidence and % overlap
+# append incidence and percentage to AUC corr values
+dat <- rbind(pos, neg)
+rownames(dat) <- paste(dat$Regulon2, dat$Regulon1, sep = "-")  
+rownames(tab) <- paste(tab$Regulon1, tab$Regulon2, sep = "-")
+dat <- tibble ::rownames_to_column (dat, var = 'ID')
+tab <- tibble :: rownames_to_column (tab, var = 'ID')
+# join by ID
+dat <- inner_join(tab, dat, by = 'ID')
+#valid_rows <- rownames(tab)
+#AUC <- AUC[valid_rows,]  #Get correlation values only for required TF pairs
+# tab$corr <- AUC$corr  #Add correlation values to the dataframe
+# fct_rev to get lower triangular plot
+library (forcats)
+dat$Regulon2.y = forcats::fct_rev(factor(dat$Regulon2.y))
+# plot subset of dat
+
+# draw the dotplot
+dotplot <- ggplot2::ggplot(data = dat, mapping =  ggplot2::aes(x = Regulon1.y, y = Regulon2.y)) + 
+  #ggplot2::geom_point(mapping = ggplot2::aes(color = corr, size = ifelse(percentage==0.00, NA, percentage))) + 
+  ggplot2::geom_point(mapping = ggplot2::aes(color = corr, size = percentage)) + 
+  ggplot2::theme(axis.text.x.bottom = ggplot2::element_text(angle = 90, vjust = 0, hjust = 1, size = 4)) +
+  ggplot2::theme(axis.text.y = ggplot2::element_text(size = 4)) +
+  ggplot2::ggtitle("correlated regulons") + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)) +
+  ggplot2::scale_x_discrete(position = "bottom") + ggplot2::labs(size = 'percentage of overalapping genes', color = 'correlation between regulons activity scores')
+
+pdf("../plots/correlated_regulons_across_replicate_A_dotplot.pdf", height = 10, width = 12)
+plot(dotplot)
+dev.off()
+```
+
+```{r}
+# read markers list
+markers <- read.csv('../data/mouse_brain_marker_genes.csv')
+gpd_genes <- read.table('../data/GPD_genes_mouse.txt'); gpd_genes = gpd_genes$V2
+
+```
+
+
+```{r}
+# plot the network
+sub = NULL; sub = dat
+REG1 <- data.frame(Regulon1 = sub$Regulon1.x, n_genes = sub$nR1_genes)
+REG1 <- unique(REG1)
+REG2 <- data.frame(Regulon1 = sub$Regulon2.x, n_genes = sub$nR2_genes)
+REG2 <- unique(REG2)
+nodes <- unique(rbind(REG1,REG2))  #Assign TF as nodes
+rownames(nodes) <- NULL
+names(nodes) <- c("Regulons","n_genes")
+links <- data.frame(Regulon1 = sub$Regulon1.x, Regulon2 = sub$Regulon2.x, percentage = sub$percentage, corr = sub$corr) #Info on nodes and edges
+net <- graph.data.frame(d = links, vertices = nodes, directed = F)
+centrality = eigen_centrality(net)$vector  #Measure centrality
+centrality <- data.frame(centrality)
+#leastcentral <- subset(rownames(centrality), centrality$centrality < (fivenum(centrality$centrality)[3]))  
+# remove nodes with less than 25% of centrality values
+leastcentral <- subset(rownames(centrality), centrality$centrality < (quantile(centrality$centrality)[2]))
+net <- delete_vertices(net, leastcentral) #Remove nodes with least centrality
+
+#Graph attributes
+# nodes
+colrs <- c("gray50", "tomato", "gold")
+#Compute node degrees (#links) and use that to set node size:
+#deg <- degree(net, mode="all")
+#V(net)$size <- deg/3
+V(net)$size <- as.numeric(V(net)$n_genes)*0.01
+#V(net)$label.color <- "black"
+#E(net)$width <-  rescale(E(net)$corr, to = c(0.5,2.5))
+#E(net)$width <-  rescale(E(net)$corr, to = c(0,2))
+#E(net)$edge.color <- c("slategrey", "dark red")[(E(net)$corr < 0)+1]
+#E(net)$edge.color <- c("slategrey", "dark red")[(E(net)$corr < 0)*-1]
+#col1 <- adjustcolor( "blue", alpha.f = 0.3) # +ve correlation
+#col2 <- adjustcolor( "red", alpha.f = 0.3)  # -ve correlation
+#E(net)$edge.color <- c(col1, col2)[(E(net)$corr < 0)]
+#E(net)$edge.color <- c(col1, col2)
+# edges
+E(net)$edge.width <- abs(E(net)$corr)*8
+E(net)$color <- ifelse(E(net)$corr > 0, "blue","red")
+
+
+#Plot
+pdf("../plots/corrleated_regulons_net.pdf")
+plot(net,vertex.label.cex = 0.5,vertex.color = "orange", edge.color = E(net)$edge.color,edge.width = E(net)$width, vertex.size = V(net)$size, vertex.label.font = 2, vertex.label.dist = 0.8, layout = layout_with_graphopt)
+dev.off()
+
+saveRDS(net, file = '../data/correlated_regulons.Rds')
+```
+
+```{r}
+# https://cran.r-project.org/web/packages/leiden/vignettes/run_leiden.html
+# cluster the networks
+# leiden
+adjacency_matrix <- igraph::as_adjacency_matrix(net, edges = TRUE)
+# run the leiden algorithm on the adjacency matrix
+partition <- leiden(adjacency_matrix, resolution_parameter = 1, node_sizes = V(net)$size, weights = NULL)
+table(partition)
+
+# visualise
+node.cols <- brewer.pal(max(c(4, partition)),"Set3")[partition]
+#node.cols <- rainbow(5, alpha=.5)
+#node.cols <- brewer.pal(4, "Set3")
+plot(net, vertex.color = node.cols, edge.color = E(net)$edge.color, , vertex.label.cex = 0.5)
+plot(net, layout=layout_with_fr, vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.width = E(net)$edge.width/8)
+
+plot(net, layout=layout_with_drl, vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.width = E(net)$edge.width/8)
+
+plot(net, layout=layout_with_kk, vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.width = E(net)$edge.width/8)
+
+plot(net, layout=layout_with_mds, vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.width = E(net)$edge.width/8)
+
+plot(net, layout=layout_with_lgl, vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.width = E(net)$edge.width/8)
+
+plot(net, layout=layout_with_graphopt, vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.width = E(net)$edge.width/8)
+```
+
+```{r}
+# overlapping nodes 
+# leiden clusters
+par(mfrow=c(1, 3))
+g <- net
+plot(g,layout=layout_with_fr,vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, edge.width = E(net)$edge.width/8, vertex.label.cex = 0.5)
+mtext("layout_with_fr", side=1)
+e <- get.edgelist(g); e <- get.edgelist(g,names=FALSE)
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(g))
+plot(g,layout=layout_with_fr,vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, edge.width = E(net)$edge.width/8, vertex.label.cex = 0.5)
+mtext("qgraph.layout.fruchtermanreingold default", side=1)
+
+l <- qgraph.layout.fruchtermanreingold(e,vcount=vcount(g),
+      area=8*(vcount(g)^2),repulse.rad=(vcount(g)^3.1))
+plot(g,layout=layout_with_fr,vertex.color = node.cols, edge.color = E(net)$edge.color, vertex.label.dist=1, vertex.size=V(net)$size, edge.width = E(net)$edge.width/8, vertex.label.cex = 0.5)
+mtext("qgraph.layout.fruchtermanreingold modified", side=1)
+
+```
+
+```{r}
+# community detection based on label propagation
+clp <- cluster_label_prop(net)
+class(clp)
+# Community detection returns an object of class "communities" # which igraph knows how to plot:
+plot(clp, net)
+# We can also plot the communities without relying on their built-in plot:
+V(net)$community <- clp$membership
+colrs <- adjustcolor( c("gray50", "tomato", "gold", "yellowgreen"), alpha=.6) 
+plot(net, vertex.color=colrs[V(net)$community], edge.width = E(net)$edge.width/8, edge.color = E(net)$edge.color, vertex.size = V(net)$size, layout = layout_with_kk)
+```
+
+```{r}
+# louvain 
+# https://igraph.org/r/doc/cluster_louvain.html
+communities <- cluster_louvain (net, weights = E(net)$edge.width)
+membership(communities)
+modularity(communities)
+plot(communities, net)
+plot(communities, net, layout=layout_with_fr, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.color = E(net)$edge.color, edge.width = E(net)$edge.width/8, vertex.color = node.cols)
+plot(communities, net, layout=layout_with_drl, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.color = E(net)$edge.color, edge.width = E(net)$edge.width/8)
+plot(communities, net, layout=layout_with_kk, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.color = E(net)$edge.color, edge.width = E(net)$edge.width/8)
+plot(communities, net, layout=layout_with_mds, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.color = E(net)$edge.color, edge.width = E(net)$edge.width/8)
+plot(communities, net, layout=layout_with_lgl, vertex.label.dist=1, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.color = E(net)$edge.color, edge.width = E(net)$edge.width/8)
+plot(communities, net, layout=layout_with_graphopt, vertex.label.dist=0.5, vertex.size=V(net)$size, vertex.label.cex = 0.5, edge.color = E(net)$edge.color, edge.width = E(net)$edge.width/8)
+
+```
+
+```{r}
+# focus on regulons whose target overlap is minimal but are highly correlated according to the activity scores
+zero_overlap <- tab[tab$nR1_R2_genes == 0, ] # 62675     8
+dat <- AUC_sig[AUC_sig$Regulon1 %in% zero_overlap$Regulon1 | AUC_sig$Regulon1 %in% zero_overlap$Regulon2 | AUC_sig$Regulon2 %in% zero_overlap$Regulon1 | AUC_sig$Regulon2 %in% zero_overlap$Regulon2, ]
+
+# removed duplicates and non-unique regulon-regulon links
+dat <- read.delim ('../data/correlated_regulons_with_zero_overlapping_targets.txt')
+int_regulon_AUC <- regulonAUC[,colnames(regulonAUC) %in% dat$Regulon1 | colnames(regulonAUC) %in% dat$Regulon2]
+
+```
+
+```{r}
+# correlated non overlapping regulons by Cell type
+# plot by timepoint, cluster and cell type
+sub = NULL; sub = regulonActivity_byCellType
+common_1 <- intersect(rownames(sub), dat$Regulon1)
+common_2 <- intersect(rownames(sub), dat$Regulon2)
+common <- union (common_1, common_2)
+sub <- sub[common, ]
+
+pdf ('../plots/corr_no_overlap_regulons_byCellTypes.pdf', width  = 8, height = 15)
+sub_Scaled <- t(scale(t(sub), center = T, scale=T))
+pheatmap::pheatmap(sub_Scaled, #fontsize_row=3, 
+                   color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), fontsize_row = 5, 
+                   treeheight_row=10, treeheight_col=10, border_color=NA)
+dev.off()
+
+# NMF
+seed= 123456
+# run at multiple ranks and choose the one at which the cophenetic value starts to decrease
+# Estimation of the rank: Consensus matrices computed from 10 runs for each value of r
+estim.r <- nmf (sub, 2:10, nrun = 10, seed = seed)
+#pdf ('RegulonActivity_byTimePoint_nmf_single_method_over_range_of_ranks.pdf', width = 20, height = 18)
+plot(estim.r)
+#consensusmap (estim.r, annCol = annotation)
+#dev.off()
+
+# randomize the data and recompute the rank
+# shuffle the original data
+V.random <- randomize (sub)
+# estimate quality measures from the shuffled data using default nmf algorithm
+estim.r.random <- nmf (V.random, 4, nrun = 10, seed = 123456)
+# plot measures on the same graph
+#pdf ('RegulonActivity_byTimePoint_nmf_single_method_over_range_of_ranks_randomized.pdf', width= 20, height = 18)
+plot (estim.r, estim.r.random)
+#dev.off()
+
+# nmf results
+res <- nmf(sub, 4, seed = seed)
+
+# visualise nmf results
+#pdf ('RegulonActivity_byTimePoint_nmf_coefficient_matrix.pdf')
+coefmap(res) 
+basismap (res, annRow=list(basis=':basis'))
+#dev.off()
+# retrieve the fitted model
+fit(res)
+#<Object of class:NMFstd>
+#features: 790 
+#basis/rank: 8 
+#samples: 152
+# quality measures
+summary (res)
+
+# nmf matrices are sparse, metagenes can be characterized by a small group of genes
+# those are determined based on their relative contribution to each metagene
+feature_scores <- featureScore(res, method = 'kim')
+summary (feature_scores)
+
+# plot distribution of regulons feature scores
+df <- data.frame (feature_scores)
+ggplot (df, aes(x = feature_scores)) + 
+  geom_histogram(binwidth=.1) + 
+  geom_vline(xintercept = median (feature_scores, na.rm = T), color = 'red', linetype = 'dashed', size = 1)
+
+# compute the scores and characterise each metagenes
+# extract top 5 for each basis
+#s <- extractFeatures(res, 5L)
+
+# extract features that have a relative basis contribution above a threshold
+s <- extractFeatures(res, 0.25, nodups = TRUE)
+str(s)
+
+# check identity of each rank
+type_1 <- feature_scores[s[[1]]]
+type_2 <- feature_scores[s[[2]]]
+type_3 <- feature_scores[s[[3]]]
+type_4 <- feature_scores[s[[4]]]
+
+type1_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_1), ]
+type2_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_2), ]
+type3_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_3), ]
+type4_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_4), ]
+pdf ('../plots/nmf_corr_no_overlap_regulons_byCellTypes.pdf')
+pheatmap::pheatmap(type1_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+pheatmap::pheatmap(type2_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+pheatmap::pheatmap(type3_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+pheatmap::pheatmap(type4_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+dev.off()
+```
+
+```{r}
+# correlated non overlapping regulons by Cell type
+# plot by timepoint, cluster and cell type
+sub = NULL; sub = regulonActivity_byTimePoint
+common_1 <- intersect(rownames(sub), dat$Regulon1)
+common_2 <- intersect(rownames(sub), dat$Regulon2)
+common <- union (common_1, common_2)
+sub <- sub[common, ]
+
+pdf ('../plots/corr_no_overlap_regulons_byTimePoint.pdf', width  = 20, height = 10)
+sub_Scaled <- t(scale(t(sub), center = T, scale=T))
+pheatmap::pheatmap(sub_Scaled, #fontsize_row=3, 
+                   color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), fontsize_row = 5, 
+                   treeheight_row=10, treeheight_col=10, border_color=NA)
+dev.off()
+
+# NMF
+seed= 123456
+# run at multiple ranks and choose the one at which the cophenetic value starts to decrease
+# Estimation of the rank: Consensus matrices computed from 10 runs for each value of r
+estim.r <- nmf (sub, 2:10, nrun = 10, seed = seed)
+#pdf ('RegulonActivity_byTimePoint_nmf_single_method_over_range_of_ranks.pdf', width = 20, height = 18)
+plot(estim.r)
+#consensusmap (estim.r, annCol = annotation)
+#dev.off()
+
+# randomize the data and recompute the rank
+# shuffle the original data
+V.random <- randomize (sub)
+# estimate quality measures from the shuffled data using default nmf algorithm
+estim.r.random <- nmf (V.random, 2, nrun = 10, seed = 123456)
+# plot measures on the same graph
+#pdf ('RegulonActivity_byTimePoint_nmf_single_method_over_range_of_ranks_randomized.pdf', width= 20, height = 18)
+plot (estim.r, estim.r.random)
+#dev.off()
+
+# nmf results
+res <- nmf(sub, 2, seed = seed)
+
+# visualise nmf results
+#pdf ('RegulonActivity_byTimePoint_nmf_coefficient_matrix.pdf')
+coefmap(res) 
+basismap (res, annRow=list(basis=':basis'))
+#dev.off()
+# retrieve the fitted model
+fit(res)
+#<Object of class:NMFstd>
+#features: 790 
+#basis/rank: 8 
+#samples: 152
+# quality measures
+summary (res)
+
+# nmf matrices are sparse, metagenes can be characterized by a small group of genes
+# those are determined based on their relative contribution to each metagene
+feature_scores <- featureScore(res, method = 'kim')
+summary (feature_scores)
+
+# plot distribution of regulons feature scores
+df <- data.frame (feature_scores)
+ggplot (df, aes(x = feature_scores)) + 
+  geom_histogram(binwidth=.1) + 
+  geom_vline(xintercept = median (feature_scores, na.rm = T), color = 'red', linetype = 'dashed', size = 1)
+
+# compute the scores and characterise each metagenes
+# extract top 5 for each basis
+#s <- extractFeatures(res, 5L)
+
+# extract features that have a relative basis contribution above a threshold
+s <- extractFeatures(res, 0.25, nodups = TRUE)
+str(s)
+
+# check identity of each rank
+type_1 <- feature_scores[s[[1]]]
+type_2 <- feature_scores[s[[2]]]
+
+type1_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_1), ]
+type2_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_2), ]
+pdf ('../plots/nmf_corr_no_overlap_regulons_byTimePoints.pdf', width = 12)
+pheatmap::pheatmap(type1_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+pheatmap::pheatmap(type2_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+dev.off()
+```
+
+```{r}
+# correlated non overlapping regulons by Cell type
+# plot by timepoint, cluster and cell type
+sub = NULL; sub = regulonActivity_byCluster
+common_1 <- intersect(rownames(sub), dat$Regulon1)
+common_2 <- intersect(rownames(sub), dat$Regulon2)
+common <- union (common_1, common_2)
+sub <- sub[common, ]
+
+pdf ('../plots/corr_no_overlap_regulons_byCluster.pdf', width  = 8, height = 15)
+sub_Scaled <- t(scale(t(sub), center = T, scale=T))
+pheatmap::pheatmap(sub_Scaled, #fontsize_row=3, 
+                   color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), fontsize_row = 5, 
+                   treeheight_row=10, treeheight_col=10, border_color=NA)
+dev.off()
+
+# NMF
+seed= 123456
+# run at multiple ranks and choose the one at which the cophenetic value starts to decrease
+# Estimation of the rank: Consensus matrices computed from 10 runs for each value of r
+estim.r <- nmf (sub, 2:10, nrun = 10, seed = seed)
+#pdf ('RegulonActivity_byTimePoint_nmf_single_method_over_range_of_ranks.pdf', width = 20, height = 18)
+plot(estim.r)
+#consensusmap (estim.r, annCol = annotation)
+#dev.off()
+
+# randomize the data and recompute the rank
+# shuffle the original data
+V.random <- randomize (sub)
+# estimate quality measures from the shuffled data using default nmf algorithm
+estim.r.random <- nmf (V.random, 4, nrun = 10, seed = 123456)
+# plot measures on the same graph
+#pdf ('RegulonActivity_byTimePoint_nmf_single_method_over_range_of_ranks_randomized.pdf', width= 20, height = 18)
+plot (estim.r, estim.r.random)
+#dev.off()
+
+# nmf results
+res <- nmf(sub, 4, seed = seed)
+
+# visualise nmf results
+#pdf ('RegulonActivity_byTimePoint_nmf_coefficient_matrix.pdf')
+coefmap(res) 
+basismap (res, annRow=list(basis=':basis'))
+#dev.off()
+# retrieve the fitted model
+fit(res)
+#<Object of class:NMFstd>
+#features: 790 
+#basis/rank: 8 
+#samples: 152
+# quality measures
+summary (res)
+
+# nmf matrices are sparse, metagenes can be characterized by a small group of genes
+# those are determined based on their relative contribution to each metagene
+feature_scores <- featureScore(res, method = 'kim')
+summary (feature_scores)
+
+# plot distribution of regulons feature scores
+df <- data.frame (feature_scores)
+ggplot (df, aes(x = feature_scores)) + 
+  geom_histogram(binwidth=.1) + 
+  geom_vline(xintercept = median (feature_scores, na.rm = T), color = 'red', linetype = 'dashed', size = 1)
+
+# compute the scores and characterise each metagenes
+# extract top 5 for each basis
+#s <- extractFeatures(res, 5L)
+
+# extract features that have a relative basis contribution above a threshold
+s <- extractFeatures(res, 0.25, nodups = TRUE)
+str(s)
+
+# check identity of each rank
+type_1 <- feature_scores[s[[1]]]
+type_2 <- feature_scores[s[[2]]]
+type_3 <- feature_scores[s[[3]]]
+type_4 <- feature_scores[s[[4]]]
+
+type1_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_1), ]
+type2_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_2), ]
+type3_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_3), ]
+type4_dat <- sub_Scaled[rownames(sub_Scaled) %in% names(type_4), ]
+
+pdf ('../plots/nmf_corr_no_overlap_regulons_byCluster.pdf', width = 12)
+pheatmap::pheatmap(type1_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+pheatmap::pheatmap(type2_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+pheatmap::pheatmap(type3_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+pheatmap::pheatmap(type4_dat, fontsize_row=5, fontsize_col = 4, color=colorRampPalette(c("blue","white","red"))(100), breaks=seq(-3, 3, length.out = 100), treeheight_row=10, treeheight_col=10, border_color=NA)
+dev.off()
+```
