@@ -11,7 +11,7 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
 # available in two replicates mapped to hg19 
 
 # liftover fetal brain H3K27ac data from hg19 to hg38
-  ./liftOver.dms -minMatch=1 H3K27ac_data/GSM1598016_Fetal_brain_H3K27ac_rep1_peaks.txt hg19ToHg38.over.chain H3K27ac_data/GSM1598016_Fetal_brain_H3K27ac_rep1_peaks_hg38.txt H3K27ac_data/unMapped
+  	./liftOver.dms -minMatch=1 H3K27ac_data/GSM1598016_Fetal_brain_H3K27ac_rep1_peaks.txt hg19ToHg38.over.chain H3K27ac_data/GSM1598016_Fetal_brain_H3K27ac_rep1_peaks_hg38.txt H3K27ac_data/unMapped
 
 # merging H3K27ac peaks from two replicates
 	bedtools intersect -a GSM1598016.sorted.bed -b GSM1598017.sorted.bed -f 0.9 -r -wo > GSM159801X.sorted.bed 
@@ -40,7 +40,7 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
 # mouse data was already liftedOver to hg19
 #################### 
 # liftOver to hg38
-  ./liftOver.dms -minMatch=1 H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover.bed hg19ToHg38.over.chain H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed H3K27ac_data/pmid_24360275/unMapped
+  	./liftOver.dms -minMatch=1 H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover.bed hg19ToHg38.over.chain H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed H3K27ac_data/pmid_24360275/unMapped
 
 # intersect microglia motifs with mouse H3K27ac data   
-  bedtools intersect -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed -f 0.5 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_mouse.output.bed
+  	bedtools intersect -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed -f 0.5 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_mouse.output.bed
