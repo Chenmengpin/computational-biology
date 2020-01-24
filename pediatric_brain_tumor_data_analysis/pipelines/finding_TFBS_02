@@ -1,0 +1,46 @@
+# we want to allocate enahcner and super enahcner elements upstream of identified motifs from finding_TFBS_01
+# H3K27ac is a marker of active enhancers
+# so we will overlap motif coordinates with coordinates of regions identified to have H3K27ac marks
+# we have three potential lists of H3K27ac marks: 1) roadmap adult brain data, 2) fetal brain data, and 3) mouse data
+
+#################### 
+fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
+#################### 
+# pmid:26719341
+# The fetal brain-specific candidate enhancers are associated with brain development genes such as PAX6, TUBB2B, NEUROG1, NEUROG2, NEUROD2, and FEZF2.
+# available in two replicates mapped to hg19 
+
+# liftover fetal brain H3K27ac data from hg19 to hg38
+  ./liftOver.dms -minMatch=1 H3K27ac_data/GSM1598016_Fetal_brain_H3K27ac_rep1_peaks.txt hg19ToHg38.over.chain H3K27ac_data/GSM1598016_Fetal_brain_H3K27ac_rep1_peaks_hg38.txt H3K27ac_data/unMapped
+
+# merging H3K27ac peaks from two replicates
+	bedtools intersect -a GSM1598016.sorted.bed -b GSM1598017.sorted.bed -f 0.9 -r -wo > GSM159801X.sorted.bed 
+
+# intersect microglia motifs and fetal H3K27ac data
+	bedtools intersect  -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/pmid_26719341/GSM159801X.sorted.bed -f 0.5 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_fetal.output.bed 
+
+#################### 
+# roadmap adult brain data: https://egg2.wustl.edu/roadmap/data/byFileType/alignments/consolidated/
+# https://docs.google.com/spreadsheets/d/1yikGx4MsO9Ei36b64yOy9Vb6oPC5IBGlFbYEt-N6gOM/edit#gid=15
+# 7 adult brain tissues available
+#################### 
+# overalp brain H3K27ac data from different brain tissues
+  bedtools intersect -a E067-H3K27ac.tagAlign -b E069-H3K27ac.tagAlign E072-H3K27ac.tagAlign E074-H3K27ac.tagAlign E068-H3K27ac.tagAlign E071-H3K27ac.tagAlign E073-H3K27ac.tagAlign -f 0.9 -r -wo -names BRN.CING.GYR BRN.INF.TMP BRN.SUB.NIG BRN.ANT.CAUD BRN.HIPP.MID BRN.DL.PRFRNTL.CRTX -sorted > roadmap_adult_data.bed
+  
+# intersect adult data and microglia motifs
+	bedtools intersect -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed -f 0.5 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_roadmap.output.bed
+  
+# intersect microglia motifs against fetal and adult (roadmap) data keeping labels as to where each region is coming from 
+	bedtools intersect -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed H3K27ac_data/pmid_26719341/GSM159801X.sorted.bed -f 0.5 -wo -names adult_roadmap fetal -sorted > microglia/microglia_motifs_genes_filtered_H3K27ac_roadmap_fetal.output.bed  
+  
+  
+  #################### 
+# mouse data: https://enhancer.lbl.gov/mouse_timecourse/
+# pmid: 24360275
+# mouse data was already liftedOver to hg19
+#################### 
+# liftOver to hg38
+  ./liftOver.dms -minMatch=1 H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover.bed hg19ToHg38.over.chain H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed H3K27ac_data/pmid_24360275/unMapped
+
+# intersect microglia motifs with mouse H3K27ac data   
+  bedtools intersect -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed -f 0.5 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_mouse.output.bed
