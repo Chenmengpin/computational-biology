@@ -63,4 +63,8 @@ Srf = read.delim ('microglia_Srf.txt')
 Srf_dat = dat[dat$V8 == 'SRF', ]
 Srf_dat = Srf_dat[Srf_dat$V13 %in% Srf$GENEID, ]
 dim(Srf_dat)
-```{r}
+
+# TODO
+# visualise proportion of how many target genes are in common vs those that are left out
+# re-read SCENIC pipeline to dig into why this is happening 
+ 
