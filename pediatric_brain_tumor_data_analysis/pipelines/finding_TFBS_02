@@ -4,6 +4,7 @@
 # we have three potential lists of H3K27ac marks: 1) roadmap adult brain data, 2) fetal brain data, and 3) mouse data
 
 export PATH=$HOME/meme/bin:$HOME/meme/libexec/meme-5.1.0:$PATH
+# starting file : microglia_motifs_genes_filtered.output.bed has 23 unique TFs
 
 #################### 
 fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
@@ -17,10 +18,10 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
 
 # merging H3K27ac peaks from two replicates
 # this step significantly affects the number of retained overlapping regions
-	bedtools intersect -a GSM1598016.sorted.bed -b GSM1598017.sorted.bed -f 0.9 -r -wo > GSM159801X.sorted.bed 
+	bedtools intersect -a GSM1598016.sorted.bed -b GSM1598017.sorted.bed -f 0.5 -r -wo > GSM159801X.sorted.bed 
 
 # intersect microglia motifs and fetal H3K27ac data
-	bedtools intersect  -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/pmid_26719341/GSM159801X.sorted.bed -f 0.5 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_fetal.output.bed 
+	bedtools intersect  -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/pmid_26719341/GSM159801X.sorted.bed -f 1 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_fetal.output.bed 
 
 #################### 
 # roadmap adult brain data: https://egg2.wustl.edu/roadmap/data/byFileType/alignments/consolidated/
