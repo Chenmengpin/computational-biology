@@ -29,7 +29,7 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
 # 7 adult brain tissues available
 #################### 
 # overalp brain H3K27ac data from different brain tissues
-  	bedtools intersect -a E067-H3K27ac.tagAlign -b E069-H3K27ac.tagAlign E072-H3K27ac.tagAlign E074-H3K27ac.tagAlign E068-H3K27ac.tagAlign E071-H3K27ac.tagAlign E073-H3K27ac.tagAlign -f 0.9 -r -wo -names BRN.CING.GYR BRN.INF.TMP BRN.SUB.NIG BRN.ANT.CAUD BRN.HIPP.MID BRN.DL.PRFRNTL.CRTX -sorted > roadmap_adult_data.bed
+  	bedtools intersect -a E067-H3K27ac.tagAlign -b E069-H3K27ac.tagAlign E072-H3K27ac.tagAlign E074-H3K27ac.tagAlign E068-H3K27ac.tagAlign E071-H3K27ac.tagAlign E073-H3K27ac.tagAlign -f 0.1 -r -wo -names BRN.CING.GYR BRN.INF.TMP BRN.SUB.NIG BRN.ANT.CAUD BRN.HIPP.MID BRN.DL.PRFRNTL.CRTX -sorted > roadmap_adult_data.bed
   
 # intersect adult data and microglia motifs
 	bedtools intersect -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed -f 0.5 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_roadmap.output.bed
