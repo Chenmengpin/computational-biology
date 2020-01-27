@@ -29,12 +29,22 @@ awk '{first = $1; print $0, first}' tmp1.bed | cut -f2-7 > hg38.chr.microglia.so
 sort -k1,1 -k2,2n hg38.chr.microglia.sorted.bed > tmp2.bed
 mv tmp2.bed hg38.chr.microglia.sorted.bed 
 
+# filter based on adjusted p value
+dat <- read.delim ('hg38.chrY.bed')
+dat$q.value <- p.adjust (dat$p.value, method = 'bonferroni')
+dat <- dat[dat$q.value <= quantile (dat$q.value)[3], ]
+write.table (dat, file = 'hg38.chrY.filtered.bed', sep = '\t', quote = FALSE, row.names = FALSE)
+
 # run bedtools closest to find sequences upstream, within and downstream target genes
 # reporting top 10 closest hits as this was more concordant with SCENIC predictions of regulons (i.e. target genes predicted to be regulated by particular TFs)
 # D reports the closest feature in B, and its distance to A as an extra column, and uses negative distances to report upstream features
 # When A is on the - strand, “upstream” means B has a higher (start,stop)
 # 0 distance means an overlap
-bedtools closest -a hg38Tables_ensembl.sorted.bed -b microglia/hg38.chr.microglia.sorted.bed -D a -k 10 > microglia/microglia_motifs_genes_output.bed
+bedtools closest -a microglia/hg38.chr.filtered.microglia.bed -b hg38Tables_ensembl.sorted.bed  -D a -k 100 > microglia/microglia_motifs_genes_output.bed
+
+# filter ones that are at a distance > 100 kb
+cat microglia_motifs_genes_output.bed | awk '$16<100000' > microglia_motifs_genes_filtered.output.bed
+
 
 # credits: 
 # https://bioinformatics.stackexchange.com/questions/2467/where-to-download-jaspar-tfbs-motif-bed-file
