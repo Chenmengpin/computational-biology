@@ -1,0 +1,66 @@
+# exploring discrepancies between SCENIC targets (regulons) and those picked up as 'close' to TFBS
+---
+title: "H3K27ac_motifs_TFBS"
+author: "am"
+date: "27/01/2020"
+output: html_document
+---
+
+```{r}
+setwd('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/')
+dat = read.delim ('microglia_motifs_genes_filtered_H3K27ac_fetal.output.bed', header = FALSE, stringsAsFactors=FALSE)
+Egr1 = read.delim ('microglia_Egr1.txt')
+Egr1_dat = dat[dat$V8 == 'EGR1', ]
+Egr1_dat = Egr1_dat[Egr1_dat$V13 %in% Egr1$GENEID, ]
+dim(Egr1_dat)
+
+Egr2 = read.delim ('microglia_Egr2.txt')
+Egr2_dat = dat[dat$V8 == 'EGR2', ]
+Egr2_dat = Egr2_dat[Egr2_dat$V13 %in% Egr2$GENEID, ]
+dim(Egr2_dat)
+
+Egr4 = read.delim ('microglia_Egr4.txt')
+Egr4_dat = dat[dat$V8 == 'EGR4', ]
+Egr4_dat = Egr4_dat[Egr4_dat$V13 %in% Egr4$GENEID, ]
+dim(Egr4_dat)
+
+Elk3 = read.delim ('microglia_Elk3.txt')
+Elk3_dat = dat[dat$V8 == 'ELK3', ]
+Elk3_dat = Elk3_dat[Elk3_dat$V13 %in% Elk3$GENEID, ]
+dim(Elk3_dat)
+
+Ets1 = read.delim ('microglia_Ets1.txt')
+Ets1_dat = dat[dat$V8 == 'ETS1', ]
+Ets1_dat = Ets1_dat[Ets1_dat$V13 %in% Ets1$GENEID, ]
+dim(Ets1_dat)
+
+Fos = read.delim ('microglia_Fos.txt')
+Fosb = read.delim ('microglia_Fosb.txt')
+FOSTFs = c('FOS', 'FOS::JUN(var.2)',  'FOS::JUND', 'FOSB::JUN', 'FOSL1::JUN', 
+'FOSL1::JUNB',  'FOSL2::JUN', 'FOSL2::JUN(var.2)','FOSL2::JUNB(var.2)')
+Fos_dat = dat[dat$V8 %in% FOSTFs, ]
+Fos_dat = Fos_dat[Fos_dat$V13 %in% Fos$GENEID, ]
+dim(Fos_dat)
+Fosb_dat = Fos_dat[Fos_dat$V13 %in% Fosb$GENEID, ]
+dim(Fosb_dat)
+
+jun = read.delim ('microglia_Jun.txt')
+junb = read.delim ('microglia_Junb.txt')
+FOSTFs = c('FOS::JUN(var.2)',  'FOS::JUND', 'FOSB::JUN', 'FOSL1::JUN', 
+'FOSL1::JUNB',  'FOSL2::JUN', 'FOSL2::JUN(var.2)','FOSL2::JUNB(var.2)', 'JUN','JUN::JUNB(var.2)', 'JUN(var.2)','JUNB', 'JUNB(var.2)', 'BATF::JUN')
+jun_dat = dat[dat$V8 %in% FOSTFs, ]
+jun_dat = jun_dat[jun_dat$V13 %in% jun$GENEID, ]
+dim(jun_dat)
+junb_dat = jun_dat[jun_dat$V13 %in% junb$GENEID, ]
+dim(junb_dat)
+
+Maff = read.delim ('microglia_Maff.txt')
+Maff_dat = dat[dat$V8 == 'MAFF', ]
+Maff_dat = Maff_dat[Maff_dat$V13 %in% Maff$GENEID, ]
+dim(Maff_dat)
+
+Srf = read.delim ('microglia_Srf.txt')
+Srf_dat = dat[dat$V8 == 'SRF', ]
+Srf_dat = Srf_dat[Srf_dat$V13 %in% Srf$GENEID, ]
+dim(Srf_dat)
+```{r}
