@@ -30,10 +30,12 @@ sort -k1,1 -k2,2n hg38.chr.microglia.sorted.bed > tmp2.bed
 mv tmp2.bed hg38.chr.microglia.sorted.bed 
 
 # filter based on adjusted p value
+```{r}
 dat <- read.delim ('hg38.chrY.bed')
 dat$q.value <- p.adjust (dat$p.value, method = 'bonferroni')
 dat <- dat[dat$q.value <= quantile (dat$q.value)[4], ]
 write.table (dat, file = 'hg38.chrY.filtered.bed', sep = '\t', quote = FALSE, row.names = FALSE)
+```{r}
 
 # formatting 
 cat hg38.chr*.filtered.bed > hg38.chr.filtered_4th_quantile.microglia.bed
@@ -49,8 +51,24 @@ mv tmp.bed hg38.chr.filtered_4th_quantile.microglia.bed
 bedtools closest -a microglia/hg38.chr.filtered_4th_quantile.microglia.bed -b hg38Tables_ensembl.sorted.bed  -D a -k 100 > microglia/microglia_motifs_genes_output.bed
 
 # filter ones that are at a distance > 100 kb
-cat microglia_motifs_genes_output.bed | awk '$16<100000' > microglia_motifs_genes_filtered.output.bed
-
+```{r}
+# determining if the adjusted p value is too stringent 
+dat <- read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_motifs_genes_output.bed', header = FALSE, stringsAsFactors = FALSE)
+dim(dat)
+range(dat$V16)
+#length (intersect(unique(union (jun$GENEID, junb$GENEID)), unique(dat$V13)))
+length (intersect(unique(Srf$GENEID), unique(dat$V13)))
+dat_100kb=dat
+dat_100kb = na.omit(dat_100kb)
+dat_100kb$V16 = abs(dat_100kb$V16)
+range(dat_100kb$V16)
+dat_less_than_100kb = dat_100kb[dat_100kb$V16 <= 100000, ]
+dim(dat_less_than_100kb)
+head (dat_less_than_100kb)
+#length (intersect(unique(union (jun$GENEID, junb$GENEID)), unique(dat_less_than_100kb$V13)))
+length (intersect(unique(Srf$GENEID), unique(dat_less_than_100kb$V13)))
+write.table (dat_less_than_100kb, file = '../data/TFBS/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed', sep = '\t', quote = FALSE, row.names = FALSE, col.names = FALSE)
+```{r}
 
 # credits: 
 # https://bioinformatics.stackexchange.com/questions/2467/where-to-download-jaspar-tfbs-motif-bed-file
