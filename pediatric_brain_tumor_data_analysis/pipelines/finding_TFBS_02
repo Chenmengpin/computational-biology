@@ -47,4 +47,4 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
   	./liftOver.dms -minMatch=1 H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover.bed hg19ToHg38.over.chain H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed H3K27ac_data/pmid_24360275/unMapped
 
 # intersect microglia motifs with mouse H3K27ac data   
-  	bedtools intersect -a microglia/microglia_motifs_genes_filtered.output.bed -b H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed -f 0.5 -wo > microglia/microglia_motifs_genes_filtered_H3K27ac_mouse.output.bed
+  	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed -f 0.5 -wo > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_H3K27ac_mouse.output.bed
