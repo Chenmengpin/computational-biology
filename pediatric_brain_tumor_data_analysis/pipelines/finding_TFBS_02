@@ -29,7 +29,6 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
 # 7 adult brain tissues available
 #################### 
 # concatenate brain H3K27ac data from different brain tissues
-  	#bedtools intersect -a E067-H3K27ac.tagAlign -b E069-H3K27ac.tagAlign E072-H3K27ac.tagAlign E074-H3K27ac.tagAlign E068-H3K27ac.tagAlign E071-H3K27ac.tagAlign E073-H3K27ac.tagAlign -f 0.1 -r -wo -names BRN.CING.GYR BRN.INF.TMP BRN.SUB.NIG BRN.ANT.CAUD BRN.HIPP.MID BRN.DL.PRFRNTL.CRTX -sorted > roadmap_adult_data.bed
   	cat E067-H3K27ac.tagAlign E069-H3K27ac.tagAlign E072-H3K27ac.tagAlign E074-H3K27ac.tagAlign E068-H3K27ac.tagAlign E071-H3K27ac.tagAlign E073-H3K27ac.tagAlign > roadmap_adult_data.bed
 	cat roadmap_adult_data.bed | cut -f1-3,6 > tmp.bed
 	mv tmp.bed roadmap_adult_data.bed
@@ -37,10 +36,10 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
 	mv tmp.bed roadmap_adult_data.bed
 	
 # intersect adult data and microglia motifs
-	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed -f 0.5 -wo > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_H3K27ac_roadmap.output.bed
+	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed -f 1 -wo > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_H3K27ac_roadmap.output.bed
   
 # intersect microglia motifs against fetal and adult (roadmap) data keeping labels as to where each region is coming from 
-	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed H3K27ac_data/pmid_26719341/GSM159801X.sorted.bed -f 0.5 -wo -names adult_roadmap fetal -sorted > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_H3K27ac_roadmap_fetal.output.bed  
+	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed H3K27ac_data/pmid_26719341/GSM159801X.sorted.bed -f 1 -wo -names adult_roadmap fetal -sorted > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_H3K27ac_roadmap_fetal.output.bed  
   
   
   #################### 
@@ -52,4 +51,46 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
   	./liftOver.dms -minMatch=1 H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover.bed hg19ToHg38.over.chain H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed H3K27ac_data/pmid_24360275/unMapped
 
 # intersect microglia motifs with mouse H3K27ac data   
-  	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed -f 0.5 -wo > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_H3K27ac_mouse.output.bed
+  	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed -f 1 -wo > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_H3K27ac_mouse.output.bed
+
+
+#################### 
+# we want to allocate promoters, these are regions that would be H3K27ac negative and < 500b from the gene TSS
+# attempt to use bedtools substract to remove all regions that have H3K27ac marks then subset only for those that are at less than 500 bp distance
+# as already computed by bedtools closest
+#################### 
+# we do this again based on the three lists of H3K27ac marks we have
+#################### 
+fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
+#################### 
+	bedtools subtract  -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/pmid_26719341/GSM159801X.sorted.bed -f 1 -wo > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_negative_H3K27ac_fetal_output.bed 
+
+
+#################### 
+# roadmap adult brain data: 
+#################### 
+	# intersect adult data and microglia motifs
+	bedtools subtract -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed -f 1 -wo > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_negative_H3K27ac_roadmap.output.bed
+  
+	# intersect microglia motifs against fetal and adult (roadmap) data keeping labels as to where each region is coming from 
+	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/roadmap/roadmap_adult_data.bed H3K27ac_data/pmid_26719341/GSM159801X.sorted.bed -f 1 -wo -names adult_roadmap fetal -sorted > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_negative_H3K27ac_roadmap_fetal.output.bed  
+
+
+#################### 
+# mouse data: https://enhancer.lbl.gov/mouse_timecourse/
+#################### 
+	# intersect microglia motifs with mouse H3K27ac data   
+  	bedtools intersect -a microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb.bed -b H3K27ac_data/pmid_24360275/PutativeEnhancers_mm9_to_hg19_liftover_hg38.bed -f 1 -wo > microglia/microglia_motifs_genes_output_padjusted_distance_less_than_100kb_negative_H3K27ac_mouse.output.bed
+
+
+
+
+
+
+
+
+
+
+
+
+	
