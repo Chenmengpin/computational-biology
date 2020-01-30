@@ -8,63 +8,103 @@ output: html_document
 
 ```{r}
 setwd('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/')
-dat = read.delim ('microglia_motifs_genes_filtered_H3K27ac_fetal.output.bed', header = FALSE, stringsAsFactors=FALSE)
-Egr1 = read.delim ('microglia_Egr1.txt')
+dat = NULL; 
+dat = read.delim ('microglia_motifs_genes_output_padjusted_distance_less_than_100kb_negative_H3K27ac_roadmap_fetal.output.bed', header = FALSE, stringsAsFactors=FALSE)
+
+Egr1 = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Egr1.txt')
+dim(Egr1)
 Egr1_dat = dat[dat$V8 == 'EGR1', ]
+length (unique(Egr1_dat$V13))
 Egr1_dat = Egr1_dat[Egr1_dat$V13 %in% Egr1$GENEID, ]
-dim(Egr1_dat)
+length (unique(Egr1_dat$V13))
+#dim(Egr1_dat)
+write.table(unique(Egr1_dat$V13), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/Egr1_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-Egr2 = read.delim ('microglia_Egr2.txt')
+
+Egr2 = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Egr2.txt')
+length (unique(Egr2$GENEID))
 Egr2_dat = dat[dat$V8 == 'EGR2', ]
+length (unique(Egr2_dat$V13))
 Egr2_dat = Egr2_dat[Egr2_dat$V13 %in% Egr2$GENEID, ]
-dim(Egr2_dat)
+length (unique(Egr2_dat$V13))
+#dim(Egr2_dat)
+write.table(unique(Egr2_dat$V13), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/Egr2_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-Egr4 = read.delim ('microglia_Egr4.txt')
+
+Egr4 = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Egr4.txt')
+length (unique(Egr4$GENEID))
 Egr4_dat = dat[dat$V8 == 'EGR4', ]
+length (unique(Egr4_dat$V13))
 Egr4_dat = Egr4_dat[Egr4_dat$V13 %in% Egr4$GENEID, ]
-dim(Egr4_dat)
+length (unique(Egr4_dat$V13))
+#dim(Egr4_dat)
+write.table(unique(Egr4_dat$V13), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/Egr4_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-Elk3 = read.delim ('microglia_Elk3.txt')
+
+Elk3 = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Elk3.txt')
+length (unique(Elk3$GENEID))
 Elk3_dat = dat[dat$V8 == 'ELK3', ]
+length (unique(Elk3_dat$V13))
 Elk3_dat = Elk3_dat[Elk3_dat$V13 %in% Elk3$GENEID, ]
-dim(Elk3_dat)
+length (unique(Elk3_dat$V13))
+#dim(Elk3_dat)
+write.table(unique(Elk3_dat$V13), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/Elk3_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-Ets1 = read.delim ('microglia_Ets1.txt')
+
+
+Ets1 = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Ets1.txt')
+length (unique(Ets1$GENEID))
 Ets1_dat = dat[dat$V8 == 'ETS1', ]
+length (unique(Ets1_dat$V13))
 Ets1_dat = Ets1_dat[Ets1_dat$V13 %in% Ets1$GENEID, ]
-dim(Ets1_dat)
+length (unique(Ets1_dat$V13))
+#dim(Ets1_dat)
+write.table(unique(Ets1_dat$V13), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/Ets1_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-Fos = read.delim ('microglia_Fos.txt')
-Fosb = read.delim ('microglia_Fosb.txt')
+
+Fos = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Fos.txt')
+length (unique(Fos$GENEID))
+Fosb = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Fosb.txt')
+length (unique(Fosb$GENEID))
 FOSTFs = c('FOS', 'FOS::JUN(var.2)',  'FOS::JUND', 'FOSB::JUN', 'FOSL1::JUN', 
 'FOSL1::JUNB',  'FOSL2::JUN', 'FOSL2::JUN(var.2)','FOSL2::JUNB(var.2)')
 Fos_dat = dat[dat$V8 %in% FOSTFs, ]
+length (unique(Fos_dat$V13))
 Fos_dat = Fos_dat[Fos_dat$V13 %in% Fos$GENEID, ]
-dim(Fos_dat)
 Fosb_dat = Fos_dat[Fos_dat$V13 %in% Fosb$GENEID, ]
-dim(Fosb_dat)
+length(unique(union (Fosb_dat$V13, Fos_dat$V13)))
+write.table(unique(union (Fosb_dat$V13, Fos_dat$V13)), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/Fos_Fosb_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-jun = read.delim ('microglia_Jun.txt')
-junb = read.delim ('microglia_Junb.txt')
+
+jun = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Jun.txt')
+junb = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Junb.txt')
+length (unique(union (unique(jun$GENEID), unique(junb$GENEID))))
 FOSTFs = c('FOS::JUN(var.2)',  'FOS::JUND', 'FOSB::JUN', 'FOSL1::JUN', 
 'FOSL1::JUNB',  'FOSL2::JUN', 'FOSL2::JUN(var.2)','FOSL2::JUNB(var.2)', 'JUN','JUN::JUNB(var.2)', 'JUN(var.2)','JUNB', 'JUNB(var.2)', 'BATF::JUN')
 jun_dat = dat[dat$V8 %in% FOSTFs, ]
+length (unique(jun_dat$V13))
 jun_dat = jun_dat[jun_dat$V13 %in% jun$GENEID, ]
-dim(jun_dat)
 junb_dat = jun_dat[jun_dat$V13 %in% junb$GENEID, ]
-dim(junb_dat)
+length (unique(union (unique(jun_dat$V13), unique(junb_dat$V13))))
+write.table(unique(union (junb_dat$V13, jun_dat$V13)), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/jun_junb_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-Maff = read.delim ('microglia_Maff.txt')
+
+Maff = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Maff.txt')
+length (unique(Maff$GENEID))
 Maff_dat = dat[dat$V8 == 'MAFF', ]
+length (unique(Maff_dat$V13))
 Maff_dat = Maff_dat[Maff_dat$V13 %in% Maff$GENEID, ]
-dim(Maff_dat)
+#dim(Maff_dat)
+length (unique(Maff_dat$V13))
+write.table(unique(Maff_dat$V13), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/Maff_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-Srf = read.delim ('microglia_Srf.txt')
+
+Srf = read.delim ('/Users/alyaamahmoud/Documents/GRNs/data/TFBS/microglia_Srf.txt')
+length (unique(Srf$GENEID))
 Srf_dat = dat[dat$V8 == 'SRF', ]
+length (unique(Srf_dat$V13))
 Srf_dat = Srf_dat[Srf_dat$V13 %in% Srf$GENEID, ]
-dim(Srf_dat)
+length (unique(Srf_dat$V13))
+write.table(unique(Srf_dat$V13), file = '/Users/alyaamahmoud/Documents/GRNs/data/TFBS/roadmap_fetal/Srf_dat_roadmap_fetal.txt', sep = '\t', quote= FALSE, row.names = FALSE, col.names = FALSE)
 
-# TODO
-# visualise proportion of how many target genes are in common vs those that are left out
-# re-read SCENIC pipeline to dig into why this is happening 
  
