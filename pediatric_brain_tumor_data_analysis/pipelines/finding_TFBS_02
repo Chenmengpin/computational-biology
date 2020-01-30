@@ -84,13 +84,21 @@ fetal brain data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63634
 
 
 
+# subset only those that are at distance less than 500bp
+##
+dat <- read.delim ('microglia_motifs_genes_output_padjusted_distance_less_than_100kb_negative_H3K27ac_roadmap.output.bed', header = FALSE, stringsAsFactors = FALSE)
+dat <- dat[dat$V16 < 500, ]
+write.table (dat, file = 'microglia_motifs_genes_output_padjusted_distance_less_than_500bp_negative_H3K27ac_roadmap.output.bed', sep = '\t', quote = FALSE, row.names = FALSE)
 
+##
+dat <- read.delim ('microglia_motifs_genes_output_padjusted_distance_less_than_100kb_negative_H3K27ac_fetal_output.bed', header = FALSE, stringsAsFactors = FALSE)
+dat <- dat[dat$V16 < 500, ]
+write.table (dat, file = 'microglia_motifs_genes_output_padjusted_distance_less_than_500bp_negative_H3K27ac_fetal_output.bed', sep = '\t', quote = FALSE, row.names = FALSE)
 
-
-
-
-
-
+##
+dat = read.delim ('microglia_motifs_genes_output_padjusted_distance_less_than_100kb_negative_H3K27ac_mouse.output.bed', header = FALSE, stringsAsFactors = FALSE)
+dat <- dat[dat$V16 < 500, ]
+write.table (dat, file = 'microglia_motifs_genes_output_padjusted_distance_less_than_500bp_negative_H3K27ac_mouse.output.bed', sep = '\t', quote = FALSE, row.names = FALSE)
 
 
 	
