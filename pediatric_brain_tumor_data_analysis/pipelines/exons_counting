@@ -1,0 +1,18 @@
+### counting exons to compare splicing events in relation to regulons between primary/recurrent GBM samples
+
+# using DEXSeq
+# Once you have installed HTSeq, you can use the two Python scripts, dexseq_prepare_annotation.py (described in Section 2.4) and dexseq_count.py (see Section 3), that come with the DEXSeq package.
+# path to python scripts from DEXSeq
+/home/alyaa.mohamed/R/x86_64-pc-linux-gnu-library/3.6/DEXSeq/python_scripts
+
+# generating exon bins
+# make sure your current wd containg the GTF file
+python /home/alyaa.mohamed/R/x86_64-pc-linux-gnu-library/3.6/DEXSeq/python_scripts/dexseq_prepare_annotation.py gencode.v32.annotation.gtf gencode_v32_DEXSeq_chr.gff
+
+# counting exons
+python /home/alyaa.mohamed/R/x86_64-pc-linux-gnu-library/3.6/DEXSeq/python_scripts/dexseq_count.py -f bam gencode_v32_DEXSeq_chr.gff $.fastq.gzAligned.sortedByCoord.out.bam $.txt
+
+
+
+
+
